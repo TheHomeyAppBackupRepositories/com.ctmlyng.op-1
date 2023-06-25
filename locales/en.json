@@ -1,0 +1,14 @@
+{
+    "device_unavailable": "Cannot reach zigbee device",
+    "FloorSensorError": "Floor sensor error",
+    "ExternalSensorError": "External sensor error",
+    "flow_isHeatingError": "Error! Unable to get CapabilityValue",
+    "flow_flowRegulatorErrorNumer": "Error! Number out of range",
+    "flow_CostControlDisableFailed": "Error! Disable Cost control failed ",
+    "flow_CostControlNumerError": "Error! Setpoint out of range ",
+    "flow_CostControlErrorState": "Error! CostControl only supportet in operation state ON",
+    "flow_CostControlErrorMode": "Error! Cost Control not supported in regulatormode",
+    "WarningExternalSensor": "External sensor error",
+    "flow_CostControlEnableFailed": "Error! Enable Cost control failed",
+    "flow_CangeThermostatStateError": "Error! Unable to change thermostat state"
+}
