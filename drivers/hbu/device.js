@@ -3,10 +3,12 @@
 
 const Homey = require('homey');
 const { Util, ZigBeeDevice } = require("homey-zigbeedriver");
-const { Cluster, CLUSTER, debug } = require('zigbee-clusters');
+const { ZCLNode, Cluster, CLUSTER, debug } = require('zigbee-clusters');
 
 const CTMSpecificSceneCluster = require('../../lib/CTMSpecificSceneCluster');
 const CTMSpecificSceneBoundCluster = require('../../lib/CTMSpecificSceneBoundCluster');
+
+const CTMGroupScenesConfigCluster = require('../../lib/CTMGroupScenesConfigCluster');
 
 Cluster.addCluster(CTMSpecificSceneCluster);
 
@@ -53,6 +55,24 @@ class HBU extends ZigBeeDevice {
 
     // Bind Toggle button commands
     // measure_power
+
+
+    if(this.isFirstInit()){
+
+      try {
+
+        //this.readattribute = await zclNode.endpoints[1].clusters['GroupScenesConfig'].readAttributes('group_id');
+        //this.log('readAttributes', this.readattribute );
+        //this.log ('Write Group ID 1 = 0x00:');
+        await zclNode.endpoints[1].clusters.GroupScenesConfig.writeAttributes({ group_id: 0 });
+      } catch (err) {
+        //this.setUnavailable(this.homey.__('device_unavailable')).catch(this.error);
+        this.error('Error in writeAttributes group_id: ', err)
+      }
+        
+    }
+
+
     if (this.hasCapability('measure_battery')) {
 
 		try {
@@ -69,6 +89,8 @@ class HBU extends ZigBeeDevice {
 						this.setCapabilityValue('heartbeat', false).catch(this.error);
 						this.setCapabilityValue('heartbeat', true).catch(this.error);
 					}
+
+            this.log("batteryVoltage: ", value);
 
 				  	return (Math.round(Util.mapValueRange(0, 32, 28, 32, value) * 100/32)); 
 				
@@ -140,9 +162,21 @@ class HBU extends ZigBeeDevice {
   }
 
   async onEndDeviceAnnounce() {
-    this.log('device came online!');
-    this.setAvailable().catch(this.error);
-  }
+
+    try {
+      this.log('device came online!');
+      this.setAvailable().catch(this.error);
+
+      //this.readattribute = await this.zclNode.endpoints[1].clusters['GroupScenesConfig'].readAttributes('group_id');
+      //this.log('readAttributes', this.readattribute );
+      //this.log ('Write Group ID 1 = 0x0:');
+      //await zclNode.endpoints[1].clusters['GroupScenesConfig'].writeAttributes({ group_id: 0 });
+        await this.zclNode.endpoints[1].clusters.GroupScenesConfig.writeAttributes({ group_id: 0 });
+      } catch (err) {
+        //this.setUnavailable(this.homey.__('device_unavailable')).catch(this.error);
+        this.error('Error in writeAttributes group_id: ', err)
+      }
+    }
 
   /**
    * onSettings is called when the user updates the device's settings.

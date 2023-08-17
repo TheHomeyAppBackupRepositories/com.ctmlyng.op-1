@@ -52,22 +52,31 @@ class mTouchDim extends ZigBeeLightDevice {
 		try {
 			this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].readAttributes('onOff');
 			this.setCapabilityValue('onoff', this.readattribute.onOff);
+		} catch (err) {
+			this.error('Error in readAttributes onOff: ', err);
+		}
 
-
+		try {
 			this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.LEVEL_CONTROL.NAME].readAttributes('currentLevel');
 			this.setCapabilityValue('dim', (this.readattribute.currentLevel / 254));
+		} catch (err) {
+			this.error('Error in readAttributes currentLevel: ', err);
+		}
 
+		try {
+	
 			this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.BALLAST_CONFIGURATION.NAME].readAttributes('maxLevel', 'minLevel', 'powerOnLevel');
-
+			
+			this.log("'maxLevel', 'minLevel', 'powerOnLevel'", this.readattribute);
+			
 			this.setSettings({
-				setting_max_dim: this.readattribute.currentLevel,
+				setting_max_dim: this.readattribute.maxLevel,
 				setting_min_dim: this.readattribute.minLevel,
 				setting_on_dim: this.readattribute.powerOnLevel
 			});
 
-
 		} catch (err) {
-			this.error('Error in readAttributes onOff: ', err);
+			this.error('Error in readAttributes maxLevel, minLevel, powerOnLevel: ', err);
 		}
 
 
@@ -183,7 +192,7 @@ class mTouchDim extends ZigBeeLightDevice {
 							}
 						);
 
-					this.log ('DIM currentLevel set to:', currentLevel);
+					this.log ('dim currentLevel set to:', currentLevel);
 					
 				} catch (err) {
 						//this.setUnavailable().catch(this.error);
@@ -216,7 +225,7 @@ class mTouchDim extends ZigBeeLightDevice {
 
 		
 				} catch (err) {
-					this.error('Error in temperaturSensor: ', err);
+					this.error('Error in maxLevel: ', err);
 				}
 			});
 
@@ -242,7 +251,7 @@ class mTouchDim extends ZigBeeLightDevice {
 
 		
 				} catch (err) {
-					this.error('Error in temperaturSensor: ', err);
+					this.error('Error in minLevel: ', err);
 				}
 			});
 
@@ -269,7 +278,7 @@ class mTouchDim extends ZigBeeLightDevice {
 					});
 
 				} catch (err) {
-					this.error('Error in temperaturSensor: ', err);
+					this.error('Error in powerOnLevel: ', err);
 				}
 			});
 

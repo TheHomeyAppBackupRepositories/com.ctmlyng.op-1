@@ -1407,7 +1407,7 @@ async readAll(){
 
 		this.switchTermostatFunksjon(this.readattribute.regulatorMode);
 
-		if(this.readattribute.regulatorMode == 1){
+		if(this.readattribute.regulatorMode == 1){setting_temperaturSensor
 
 			if(this.hasCapability('measure_temperature') === true){
 				this.removeCapability('measure_temperature');
