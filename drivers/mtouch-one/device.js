@@ -4,7 +4,7 @@ const Homey = require('homey');
 const { ZigBeeDevice } = require('homey-zigbeedriver');
 const { ZCLNode, CLUSTER } = require('zigbee-clusters');
 const CTMSpecificThermostatCluster = require('../../lib/CTMSpecificThermostatCluster');
-
+const CTMSpecificTimeCluster = require('../../lib/CTMSpesificTimeCluster');
 
 
 //debug(true);
@@ -125,16 +125,16 @@ class mTouchOne extends ZigBeeDevice {
 					minChange: 1,
 				},
 
-				/*
+				
 				{
 					endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
 					cluster: CLUSTER.THERMOSTAT,
-					attributeName: 'night_switching',
+					attributeName: 'relayState',
 					minInterval: 0,
-					maxInterval: 43200, // once per ~30 min
+					maxInterval: 900, // once per ~30 min
 					minChange: 1,
 				},
-				*/
+				
 
 
 
@@ -178,6 +178,7 @@ class mTouchOne extends ZigBeeDevice {
 			}
 		}
 
+		this.log("181 await this.readAll();")
 		await this.readAll();
 
 	
@@ -585,6 +586,10 @@ class mTouchOne extends ZigBeeDevice {
 					
 					this.log('relayState: ', attr_value);
 					this.setCapabilityValue('heat', attr_value).catch(this.error);
+
+	
+					this.update_consumption(attr_value);
+					
 				
 				} catch (err) {
 					this.error('Error in relayState: ', err);
@@ -627,39 +632,14 @@ class mTouchOne extends ZigBeeDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.mean_power', (mean_power) => {
 				try {
 
-					this.log('mean_power: ', mean_power);
-	
-					this.thisUpdate = Date.now();
-					this.lastUpdate = this.getStoreValue('lastUpdate');
-					this.lastMeanPower = this.getStoreValue('lastMeanPower');
-					this.sumPowerMeter = this.getStoreValue('sumPowerMeter');
+					this.log('measure_power: ', mean_power);
 
-
-					if(this.lastUpdate){
-						this.meanPowerkWh = ((this.thisUpdate - this.lastUpdate) / 1000 / 60 / 60) * (this.lastMeanPower / 1000);
-
-						this.setStoreValue('lastMeanPower', mean_power).catch( this.error );
-						this.setStoreValue('sumPowerMeter', (this.sumPowerMeter + this.meanPowerkWh)).catch( this.error );
-
-						this.setSettings({
-							setting_power_meter: (this.sumPowerMeter + this.meanPowerkWh),
-						}).catch(this.error);
-
-						this.log('meanPowerkWh : ', this.meanPowerkWh);
-
-						this.log('thisUpdate : ', this.thisUpdate);
-						this.log('lastUpdate : ', this.lastUpdate);
-						this.log('lastMeanPower : ', this.lastMeanPower);
-						this.log('mean_power : ', mean_power);
-			
-						this.log('sumPowerMeter : ', this.sumPowerMeter);
-						
-						this.setCapabilityValue('meter_power', this.sumPowerMeter).catch(this.error);
-
+					if(this.getSetting('setting_use_average') === true){
+						return;
 					}
-
-					this.setStoreValue('lastUpdate', this.thisUpdate ).catch(this.error);
-					this.setCapabilityValue('measure_power', mean_power).catch(this.error);
+					
+					this.update_consumption(mean_power);
+					
 
 				} catch (err) {
 					this.error('Error in mean_power: ', err);
@@ -777,6 +757,9 @@ class mTouchOne extends ZigBeeDevice {
 		
 				//await this.setStoreValue('regulatorsetPoint', 0).catch(this.error);
 				//this.log('this', this);
+
+				this.setClock();
+				
 				return await this.readAll();	
 	
 			} catch (err) {
@@ -788,6 +771,7 @@ class mTouchOne extends ZigBeeDevice {
 
 
 		// Read all Capability
+		this.log("795 await this.refreshSettings();")
 		await this.refreshSettings();
 		
 		
@@ -1170,6 +1154,57 @@ async flowIs_KeyLock(){
 			this.zclNode.endpoints[1].clusters.thermostat.writeAttributes({ thermostatLoad: event.newSettings.setting_floor_watt}).catch(this.error);
 
 		};
+
+
+		/********************************************************************************/
+        /*
+        /*      Effekt BEREGNING - 
+        /*      
+        **********************************************************************************/ 
+		if (event.changedKeys.includes('setting_use_average')) {
+
+
+			this.log('setting_use_average: ', event.newSettings.setting_use_average);
+
+			if(event.newSettings.setting_use_average === true){
+
+
+				try {
+					this.readattribute = await this.zclNode.endpoints[1].clusters[CLUSTER.BASIC.NAME].readAttributes(
+						'appVersion',
+						'swBuildId',
+						'hwVersion');
+					
+					this.log('SW:', this.readattribute);
+
+					this.setSettings({
+						setting_version: 'Thermostat: ' + this.readattribute_sw.appVersion + ' RF: ' + this.readattribute_sw.swBuildId,
+					}).catch(this.error);
+
+				} catch (err) {
+					this.error('Error readAttributes BASIC: ', err)
+				}
+
+
+				this.setStoreValue('lastUpdate', Date.now()).catch(this.error);
+			
+				this.setCapabilityOptions('measure_power', {
+					title: { "en": "Power", "no": "Effekt" }
+				});
+
+			} else {
+				this.setCapabilityOptions('measure_power', {
+					title: { "en": "Mean Power", "no": "Snitt effekt" }
+				});
+			}
+			
+
+		};
+
+
+
+
+		
         
         /********************************************************************************/
         /*
@@ -1346,7 +1381,7 @@ async switchTermostatFunksjon(modus) {
 		}
 
 
-		
+		this.log("1354 await this.refreshSettings();")
 		this.refreshSettings();
 		
 
@@ -1407,7 +1442,7 @@ async readAll(){
 
 		this.switchTermostatFunksjon(this.readattribute.regulatorMode);
 
-		if(this.readattribute.regulatorMode == 1){setting_temperaturSensor
+		if(this.readattribute.regulatorMode == 1){
 
 			if(this.hasCapability('measure_temperature') === true){
 				this.removeCapability('measure_temperature');
@@ -1453,11 +1488,22 @@ async readAll(){
 		if(this.floorSensorError_status === 'OK' && this.externalSensorError_status === 'OK'){
 			this.unsetWarning().catch(this.error);
 		}
+
+
+		
+		this.readattribute_sw = await this.zclNode.endpoints[1].clusters[CLUSTER.BASIC.NAME].readAttributes(
+			'appVersion',
+			'swBuildId',
+			'hwVersion');
+		
+		this.log('SW:', this.readattribute_sw);
+
 		
 		this.setSettings({
 			setting_floorSensorError: this.floorSensorError_status,
 			setting_externalSensorError: this.externalSensorError_status,
-			setting_night_switching_temp: (Math.round((this.readattribute.unoccupiedHeatingSetpoint / 100) * 10) / 10)
+			setting_night_switching_temp: (Math.round((this.readattribute.unoccupiedHeatingSetpoint / 100) * 10) / 10),
+			setting_version: 'Thermostat: ' + this.readattribute_sw.appVersion + ' RF: ' + this.readattribute_sw.swBuildId,
 		}).catch(this.error);
 
 		await this.setCapabilityValue('measure_temperature.air', (Math.round((this.readattribute.currentAirTemperature / 100) * 10) / 10)).catch(this.error);
@@ -1470,6 +1516,7 @@ async readAll(){
 			await this.setCapabilityValue('operationMode', this.readattribute.operationMode.toString(8)).catch(this.error);
 		}
 
+		this.log("1478 await this.refreshSettings();")
 		await this.refreshSettings();
 
 	
@@ -1524,11 +1571,133 @@ async refreshSettings() {
 	//this.log('getSettings2', this.getSettings());
 
 
+	
+
+
 
 }
 
 
+async setClock(){
+    
+    this.localTime = Buffer.alloc(7);
 
+    this.sys = await this.homey.clock.getTimezone();
+    this.time = new Date(); //
+
+    this.ar =  this.time.toLocaleDateString("sv-SE",{year: 'numeric', timeZone: this.sys})
+    this.mnd =  this.time.toLocaleDateString("sv-SE",{month: 'numeric', timeZone: this.sys})
+    this.dag =  this.time.toLocaleDateString("sv-SE",{day: 'numeric', timeZone: this.sys})
+    this.hours =  this.time.toLocaleTimeString("sv-SE",{hour: 'numeric', timeZone: this.sys})
+    this.minutt =  this.time.toLocaleTimeString("sv-SE",{minute: 'numeric', timeZone: this.sys})
+
+    //Displaying the extracted variables on the console
+    this.log("Lokalt år: ", this.ar); //log(‘Lokalt år är typ:’,typeof(ar))
+    this.log("Lokal mnd:",  this.mnd); //log(‘Lokal månad är typ:’,typeof(manad));
+    this.log("Lokal dag:",  this.dag);
+    this.log("Lokal time:",  this.hours);
+    this.log("Lokal minutt:",  this.minutt);
+    //Displaying time zone of the Homey
+    this.log("timeZone:",this.sys);
+
+    
+    this.localTime[0] = 20;
+    this.localTime[1] = this.ar % 100;
+    this.localTime[2] = this.mnd;
+    this.localTime[3] = this.dag;
+    this.localTime[4] = this.hours;
+    this.localTime[5] = this.minutt;
+    this.localTime[6] = 0;
+
+    //this.log("Time:", this.localTime);
+
+    try {
+      this.zclNode.endpoints[1].clusters.time.setTime({
+        Data: this.localTime,
+      },{
+        waitForResponse: false,
+      }
+      );
+    } catch (err) {
+      this.error('Error in send setTime CMD: ', err);
+    }
+
+
+
+
+
+
+  }
+
+
+
+  async update_consumption(power_usage){
+
+	this.log('setting_use_average:', this.getSetting('setting_use_average'))
+
+	if(this.getSetting('setting_use_average') === true){
+		this.log('Use real power');
+		if(power_usage === true){
+			power_usage = this.getSetting('setting_floor_watt');
+		} else {
+			power_usage = 0;
+		}		
+		this.log('real_power : ', power_usage);
+	} else {
+		this.log('mean_power : ', power_usage);
+	}
+	
+	this.thisUpdate = Date.now();
+	this.lastUpdate = this.getStoreValue('lastUpdate');
+	this.lastMeanPower = this.getStoreValue('lastMeanPower');
+	this.sumPowerMeter = this.getStoreValue('sumPowerMeter');
+
+
+	if(this.lastUpdate){
+		
+		this.meanPowerkWh = ((this.thisUpdate - this.lastUpdate) / 1000 / 60 / 60) * (this.lastMeanPower / 1000);
+
+		this.setStoreValue('lastMeanPower', power_usage).catch( this.error);
+		this.setStoreValue('sumPowerMeter', (this.sumPowerMeter + this.meanPowerkWh)).catch( this.error );
+
+		this.setSettings({
+			setting_power_meter: (this.sumPowerMeter + this.meanPowerkWh),
+		}).catch(this.error);
+
+		this.log('meanPowerkWh : ', this.meanPowerkWh);
+
+		this.log('thisUpdate : ', this.thisUpdate);
+		this.log('lastUpdate : ', this.lastUpdate);
+		this.log('Min siden siste endring: ', (((this.thisUpdate - this.lastUpdate) / 1000) / 60));
+		this.log('lastMeanPower : ', this.lastMeanPower);
+		
+
+		this.log('sumPowerMeter : ', this.sumPowerMeter);
+		
+		this.setCapabilityValue('meter_power', this.sumPowerMeter + this.meanPowerkWh).catch(this.error);
+
+	}
+
+	/*
+	if(this.getSettings('setting_use_average') === true){
+		
+		if(this.getCapabilityValue('heat') === true){
+			this.setStoreValue('lastUpdate', this.thisUpdate ).catch(this.error);
+		}
+
+		this.setStoreValue('lastUpdate', this.thisUpdate ).catch(this.error);
+
+	} else {
+		
+	}
+	*/
+
+	this.setStoreValue('lastUpdate', this.thisUpdate ).catch(this.error);
+	this.setCapabilityValue('measure_power', power_usage).catch(this.error);
+
+
+
+  }
 
 
 

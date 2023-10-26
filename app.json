@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.ctmlyng.op",
-  "version": "1.1.12",
+  "version": "1.1.20",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "brandColor": "#000000",
@@ -806,7 +806,7 @@
         "local",
         "cloud"
       ],
-      "class": "socket",
+      "class": "light",
       "capabilities": [
         "onoff",
         "onoff.rele",
@@ -874,6 +874,136 @@
         "large": "/drivers/mbd-s/assets/images/large.png",
         "xlarge": "/drivers/mbd-s/assets/images/xlarge.png"
       }
+    },
+    {
+      "id": "mbd-s-dim",
+      "name": {
+        "en": "MBD-Dim Bevegelse OP"
+      },
+      "platforms": [
+        "local",
+        "cloud"
+      ],
+      "class": "light",
+      "capabilities": [
+        "onoff",
+        "onoff.rele",
+        "alarm_motion",
+        "measure_luminance",
+        "runtime",
+        "dim"
+      ],
+      "capabilitiesOptions": {
+        "measure_luminance": {
+          "title": {
+            "en": "Luminance",
+            "no": "Lysstyrke"
+          }
+        },
+        "onoff": {
+          "title": {
+            "en": "Automatic triggering of relay",
+            "no": "Automatisk trigging av rele"
+          }
+        },
+        "onoff.rele": {
+          "title": {
+            "en": "Light",
+            "no": "Lys"
+          }
+        },
+        "runtime": {
+          "title": {
+            "en": "Time ON",
+            "no": "Påtid"
+          }
+        }
+      },
+      "connectivity": [
+        "zigbee"
+      ],
+      "zigbee": {
+        "manufacturerName": "CTM Lyng",
+        "productId": "MBD Dim",
+        "learnmode": {
+          "image": "/drivers/mbd-s-dim/assets/images/include.png",
+          "instruction": {
+            "en": "Hold down the radio button (SW2 to the left) until the yellow LED starts blinking.",
+            "no": "Hold inne radioknappen (SW2 til venstre) til gul led begynner å blinke. "
+          }
+        },
+        "endpoints": {
+          "1": {
+            "clusters": [
+              0,
+              6,
+              8,
+              769,
+              1024,
+              1030
+            ],
+            "bindings": [
+              6,
+              8,
+              769,
+              1024,
+              1030
+            ]
+          }
+        }
+      },
+      "images": {
+        "small": "/drivers/mbd-s-dim/assets/images/small.png",
+        "large": "/drivers/mbd-s-dim/assets/images/large.png",
+        "xlarge": "/drivers/mbd-s-dim/assets/images/xlarge.png"
+      },
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "MBD DIM Settings",
+            "no": "MBD DIM innstillinger"
+          },
+          "children": [
+            {
+              "id": "setting_max_dim",
+              "type": "number",
+              "label": {
+                "en": "Max level",
+                "no": "Max nivå"
+              },
+              "value": 99,
+              "min": 10,
+              "max": 99,
+              "units": "%"
+            },
+            {
+              "id": "setting_min_dim",
+              "type": "number",
+              "label": {
+                "en": "Min level",
+                "no": "Min nivå"
+              },
+              "value": 1,
+              "min": 1,
+              "max": 80,
+              "units": "%"
+            },
+            {
+              "id": "setting_on_dim",
+              "type": "number",
+              "label": {
+                "en": "Turn on level",
+                "no": "Påslagsnivå"
+              },
+              "value": 99,
+              "min": 1,
+              "max": 99,
+              "units": "%"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "mic",
@@ -1071,15 +1201,166 @@
       ]
     },
     {
+      "id": "mkomfy-tak",
+      "name": {
+        "en": "mKomfy Tak Komfyrvakt",
+        "no": "mKomfy Tak Komfyrvakt"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "alarm_battery",
+        "alarm_cooking_guard_tamper",
+        "alarm_heat",
+        "cooking",
+        "heartbeat",
+        "alarm_generic"
+      ],
+      "capabilitiesOptions": {
+        "alarm_heat": {
+          "title": {
+            "en": "Alarm overheat Cooktop",
+            "no": "Overtemperatur Platetopp"
+          }
+        }
+      },
+      "platforms": [
+        "local",
+        "cloud"
+      ],
+      "energy": {
+        "batteries": [
+          "AA",
+          "AA",
+          "AA"
+        ]
+      },
+      "connectivity": [
+        "zigbee"
+      ],
+      "zigbee": {
+        "manufacturerName": "CTM Lyng",
+        "productId": [
+          "mKomfy Tak"
+        ],
+        "endpoints": {
+          "1": {
+            "clusters": [
+              1,
+              65481
+            ],
+            "bindings": [
+              1,
+              65481
+            ]
+          }
+        },
+        "learnmode": {
+          "image": "/drivers/mkomfy-tak/assets/images/include.png",
+          "instruction": {
+            "en": "Hold the button on the back until you hear 2 beeps and release.",
+            "no": "Hold inne knappen på baksiden til du hører 2 pip og slipp"
+          }
+        }
+      },
+      "images": {
+        "small": "/drivers/mkomfy-tak/assets/images/small.png",
+        "large": "/drivers/mkomfy-tak/assets/images/large.png",
+        "xlarge": "/drivers/mkomfy-tak/assets/images/xlarge.png"
+      },
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "StoveGuard Settings",
+            "no": "Komfyrvakt innstillinger"
+          },
+          "children": [
+            {
+              "id": "setting_dip_sw_34",
+              "type": "label",
+              "label": {
+                "en": "Mounting height",
+                "no": "Monteringshøyde"
+              },
+              "value": "NA",
+              "hint": {
+                "en": "Read-only"
+              }
+            },
+            {
+              "id": "setting_dip_sw_567",
+              "type": "label",
+              "label": {
+                "en": "Timer",
+                "no": "Tidsur"
+              },
+              "value": "NA",
+              "hint": {
+                "en": "Read-only"
+              }
+            },
+            {
+              "id": "setting_dip_sw_8",
+              "type": "label",
+              "label": {
+                "en": "Current measurement",
+                "no": "Strømmåling"
+              },
+              "value": "NA",
+              "hint": {
+                "en": "Read-only"
+              }
+            },
+            {
+              "id": "setting_dip_sw_9",
+              "type": "label",
+              "label": {
+                "en": "Auto reset",
+                "no": "Autoinnkobling"
+              },
+              "value": "NA",
+              "hint": {
+                "en": "Read-only"
+              }
+            },
+            {
+              "id": "setting_dip_sw_A",
+              "type": "label",
+              "label": {
+                "en": "Testmode",
+                "no": "Testmodus"
+              },
+              "value": "NA",
+              "hint": {
+                "en": "Read-only"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": {
         "en": "mTouch Astro OP"
       },
-      "class": "light",
+      "class": "socket",
       "capabilities": [
         "onoff",
-        "onoff.enable"
+        "onoff.enable",
+        "button.refresh"
       ],
       "capabilitiesOptions": {
+        "button.refresh": {
+          "maintenanceAction": true,
+          "title": {
+            "en": "Refresh settings",
+            "no": "Oppdatere innstillinger"
+          },
+          "desc": {
+            "en": "Update date and time",
+            "no": "Oppdatere dato og klokkelsett"
+          }
+        },
         "onoff.enable": {
           "title": {
             "en": "Enable device",
@@ -1411,7 +1692,8 @@
             "clusters": [
               0,
               3,
-              513
+              513,
+              10
             ],
             "bindings": [
               3,
@@ -1441,10 +1723,22 @@
                 "en": "Heating cable effect",
                 "no": "Varmekabel effekt"
               },
-              "min": 1,
+              "min": 0,
               "max": 9999,
-              "value": 200,
+              "value": 0,
               "units": "Watt"
+            },
+            {
+              "id": "setting_use_average",
+              "type": "checkbox",
+              "label": {
+                "en": "Display actual consumption rather than the consumption average",
+                "no": "Vis reelt forbruk og ikke gjennomsnitt"
+              },
+              "hint": {
+                "en": "The thermostat calculates the hourly average, which is the default display. This function utilizes the relay's status to show the actual consumption. Note: The thermostat's firmware must be version 65 or higher, and the radio version must be 1.9 or higher.",
+                "no": "Termostaten beregner gjennomsnittet per time, som er standard visning. Denne funksjonen bruker statusen til releet og vise faktisk forbruk. NB: Fastvaren til termostaten må være 65 eller høyere og radioversjonen må være 1.9 eller høyere. "
+              }
             },
             {
               "id": "setting_temperaturSensor",
@@ -1591,7 +1885,126 @@
               "max": 500000,
               "units": {
                 "en": "kWh"
+              },
+              "hint": {
+                "en": "This is a summation performed within Homey. It means that if Homey loses contact with the thermostat, for instance, during Homey or the app downtime, the summation will not be accurate.",
+                "no": "Dette er en summering som gjøres i Homey. Det betyr hvis Homey mangler kontakt med termostaten. For eksempel hvis Homey eller appen har nedetid, vil ikke summeringen bli riktig"
               }
+            },
+            {
+              "id": "setting_version",
+              "type": "label",
+              "label": {
+                "en": "Firmware",
+                "no": "Fastvare"
+              },
+              "value": "NA",
+              "hint": {
+                "en": "If empty try power reset the Thermostat",
+                "no": "Hvis tom vil det hjelpe å restarte termostaten ved å ta strømmen."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "DimmerPille OP"
+      },
+      "class": "light",
+      "capabilities": [
+        "dim",
+        "onoff"
+      ],
+      "capabilitiesOptions": {
+        "dim": {
+          "setOnDim": "false"
+        }
+      },
+      "platforms": [
+        "local",
+        "cloud"
+      ],
+      "connectivity": [
+        "zigbee"
+      ],
+      "zigbee": {
+        "manufacturerName": "CTM Lyng",
+        "productId": "DimmerPille",
+        "learnmode": {
+          "image": "/drivers/puck-dim/assets/images/include.png",
+          "instruction": {
+            "en": "Set the Program switch to position F. Press the SW button once briefly to search for and connect to the ZigBee network. If the coordinator has enabled inclusion, the device will typically connect within 30 seconds.",
+            "no": "Sett Program bryteren i posisjon F. Trykk SW-knappen en gang kort for å søke etter og koble til ZigBeenettverket. Hvis koordinatoren har åpnet for inkludering, vil enheten vanligvis koble seg til innen 30 sekunder"
+          }
+        },
+        "endpoints": {
+          "1": {
+            "clusters": [
+              0,
+              3,
+              6,
+              8,
+              769
+            ],
+            "bindings": [
+              6,
+              8,
+              769
+            ]
+          }
+        }
+      },
+      "images": {
+        "small": "/drivers/puck-dim/assets/images/small.png",
+        "large": "/drivers/puck-dim/assets/images/large.png",
+        "xlarge": "/drivers/puck-dim/assets/images/xlarge.png"
+      },
+      "id": "puck-dim",
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Dimmer Settings",
+            "no": "Dimmer innstillinger"
+          },
+          "children": [
+            {
+              "id": "setting_max_dim",
+              "type": "number",
+              "label": {
+                "en": "Max level",
+                "no": "Max nivå"
+              },
+              "value": 99,
+              "min": 10,
+              "max": 99,
+              "units": "%"
+            },
+            {
+              "id": "setting_min_dim",
+              "type": "number",
+              "label": {
+                "en": "Min level",
+                "no": "Min nivå"
+              },
+              "value": 1,
+              "min": 1,
+              "max": 80,
+              "units": "%"
+            },
+            {
+              "id": "setting_on_dim",
+              "type": "number",
+              "label": {
+                "en": "Turn on level",
+                "no": "Påslagsnivå"
+              },
+              "value": 99,
+              "min": 1,
+              "max": 99,
+              "units": "%"
             }
           ]
         }

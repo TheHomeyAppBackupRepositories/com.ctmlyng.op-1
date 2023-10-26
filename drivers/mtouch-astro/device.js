@@ -1,21 +1,41 @@
 
-
+const Homey = require('homey');
 const { ZigBeeDevice } = require('homey-zigbeedriver');
-const { ZCLNode, CLUSTER } = require('zigbee-clusters');
+const { ZCLNode, CLUSTER, Cluster } = require('zigbee-clusters');
 const CTMspecificAstroCluster = require('../../lib/CTMSpesificAstoCluster');
+const CTMSpecificTimeCluster = require('../../lib/CTMSpesificTimeCluster');
 
 
-
-//debug(true);
 
 class mTouchAstro extends ZigBeeDevice {
   /**
    * onInit is called when the device is initialized.
    */
+
+
+  
   async onNodeInit({ zclNode }) {
+    
+  
     this.log('MyDevice has been initialized');
 
     this.setAvailable().catch(this.error);
+
+    if(this.hasCapability('button.refresh') === false){
+			await this.addCapability('button.refresh');
+			this.setCapabilityOptions('button.refresh', {
+				maintenanceAction: true,
+        title: { "en": "Refresh settings", "no": "Oppdatere innstillinger" },
+        desc: { "en": "Update date and time", "no": "Oppdatere dato og klokkelsett" }
+			});
+			//await this.removeCapability('button.refresh');
+		}
+
+
+    if (this.getClass() !== 'socket') {
+      await this.setClass('socket').catch(this.error)
+    }
+
 
     await this.configureAttributeReporting([
       {
@@ -36,9 +56,8 @@ class mTouchAstro extends ZigBeeDevice {
         minChange: 1,
       },
 
-
-
     ]);
+
 
 
     if(this.isFirstInit()){
@@ -51,10 +70,16 @@ class mTouchAstro extends ZigBeeDevice {
           setting_modus: this.readMode(this.readattribute.device_mode)
         });
 
+        
+        this.setClock();
+
       } catch (err) {
         this.error('Error in readAttributes: ', err);
       }
     }
+
+
+
 
     /******************************************************************************* */
     /*
@@ -67,10 +92,11 @@ class mTouchAstro extends ZigBeeDevice {
 
       zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.onOff', (attr_value) => {
         try {
-          this.setAvailable().catch(this.error);
-          this.log('push: attr.onOff: ', attr_value);
-
+          
           this.setCapabilityValue('onoff', attr_value);
+
+          this.log('push: attr.onOff: ', attr_value);
+          this.setAvailable().catch(this.error);
 
         } catch (err) {
           this.error('Error in onOff: ', err);
@@ -79,7 +105,10 @@ class mTouchAstro extends ZigBeeDevice {
 
       this.registerCapabilityListener('onoff', async (onOff) => {
         try {
+
           
+          this.setClock();
+
           if(onOff === false){
             this.log ('set to: Off');
             await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOff({},{
@@ -91,7 +120,7 @@ class mTouchAstro extends ZigBeeDevice {
               waitForResponse: false,
             });
           }
-          
+
           this.setCapabilityValue('onoff', onOff);
 
           this.log ('onoff.rele set to:', onOff);
@@ -197,7 +226,31 @@ class mTouchAstro extends ZigBeeDevice {
         this.error('Error in on_time: ', err);
       }
     });
-    
+
+    /********************************************************************************/
+		/*
+		/*      button.refresh "maintenanceAction": true,
+		/*     
+		/*
+		**********************************************************************************/ 
+
+		this.registerCapabilityListener('button.refresh', async () => {
+			// Maintenance action button was pressed, return a promise
+			try {
+		
+				//await this.setStoreValue('regulatorsetPoint', 0).catch(this.error);
+				//this.log('this', this);
+
+				this.setClock();
+			
+	
+			} catch (err) {
+				this.error('Error in onStartRead: ', err);
+				throw new Error('Something went wrong');
+			}
+			
+		});
+  
 
 
   }
@@ -253,6 +306,59 @@ class mTouchAstro extends ZigBeeDevice {
     }
 
   }
+
+
+  async setClock(){
+    
+    this.localTime = Buffer.alloc(7);
+
+    this.sys = await this.homey.clock.getTimezone();
+    this.time = new Date(); //
+
+    this.ar =  this.time.toLocaleDateString("sv-SE",{year: 'numeric', timeZone: this.sys})
+    this.mnd =  this.time.toLocaleDateString("sv-SE",{month: 'numeric', timeZone: this.sys})
+    this.dag =  this.time.toLocaleDateString("sv-SE",{day: 'numeric', timeZone: this.sys})
+    this.hours =  this.time.toLocaleTimeString("sv-SE",{hour: 'numeric', timeZone: this.sys})
+    this.minutt =  this.time.toLocaleTimeString("sv-SE",{minute: 'numeric', timeZone: this.sys})
+
+    //Displaying the extracted variables on the console
+    this.log("Lokalt år: ", this.ar); //log(‘Lokalt år är typ:’,typeof(ar))
+    this.log("Lokal mnd:",  this.mnd); //log(‘Lokal månad är typ:’,typeof(manad));
+    this.log("Lokal dag:",  this.dag);
+    this.log("Lokal time:",  this.hours);
+    this.log("Lokal minutt:",  this.minutt);
+    //Displaying time zone of the Homey
+    this.log("timeZone:",this.sys);
+
+    
+    this.localTime[0] = 20;
+    this.localTime[1] = this.ar % 100;
+    this.localTime[2] = this.mnd;
+    this.localTime[3] = this.dag;
+    this.localTime[4] = this.hours;
+    this.localTime[5] = this.minutt;
+    this.localTime[6] = 0;
+
+    //this.log("Time:", this.localTime);
+
+    try {
+      this.zclNode.endpoints[1].clusters.time.setTime({
+        Data: this.localTime,
+      },{
+        waitForResponse: false,
+      }
+      );
+    } catch (err) {
+      this.error('Error in send setTime CMD: ', err);
+    }
+
+
+
+
+
+
+  }
+
 
 
 
