@@ -11,7 +11,7 @@ class MBDDriver extends Driver {
     this.log('MyDriver has been initialized');
 
 
-
+    /*
     //ConditionCard - HEATING
     this.cardConditionRelay = this.homey.flow.getConditionCard('flow-rele_status');
     this.cardConditionRelay.registerRunListener(async (args) => {
@@ -24,6 +24,7 @@ class MBDDriver extends Driver {
     this.cardEnableRelay.registerRunListener(async (args) => {
         await args.device.flowEnableRelay(args);
     });
+    */
 
 
   }

@@ -4,7 +4,6 @@ const { ZCLNode, CLUSTER } = require('zigbee-clusters');
 const { ZigBeeDevice } = require('homey-zigbeedriver');
 
 
-
 class ventildriver extends ZigBeeDevice {
 
   /**
@@ -12,6 +11,8 @@ class ventildriver extends ZigBeeDevice {
    */
 	async onNodeInit({ zclNode }) {  
 
+
+		this.print_log = 0;
 		this.log('WaterValve has been initialized');
 		this.setAvailable().catch(this.error);
     
@@ -24,24 +25,23 @@ class ventildriver extends ZigBeeDevice {
 				try {
 
 					if(onOff === false){
-						this.log ('set to: Off');
+						if(this.print_log === 1)  this.log ('set to: Off');
 						await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOff({},{
 							waitForResponse: true,
 						});
 					} else {
-						this.log ('set to: ON');
+						if(this.print_log === 1)  this.log ('set to: ON');
 						await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOn({},{
 							waitForResponse: true,
 						});
 					}					
 					
 					
-					this.log ('onoff set to:', onOff);
+					if(this.print_log === 1)  this.log ('onoff set to:', onOff);
 
 					this.setCapabilityValue('onoff', onOff).catch(this.error);
 
 				} catch (err) {
-
 						this.error('Error in setting onoff: ', err);
 				}
 				
@@ -53,7 +53,7 @@ class ventildriver extends ZigBeeDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.onOff', (attr_value) => {
 				try {
 							
-					this.log('attr.onOff: ', attr_value);
+					if(this.print_log === 1)  this.log('attr.onOff: ', attr_value);
 
 					this.setCapabilityValue('onoff', attr_value).catch(this.error);
 
@@ -70,7 +70,7 @@ class ventildriver extends ZigBeeDevice {
 		
 		zclNode.endpoints[2].clusters.iasZone.onZoneEnrollRequest = () => {
 			try {
-				this.log("onZoneEnrollRequest");
+				if(this.print_log === 1)  this.log("onZoneEnrollRequest");
 
 				zclNode.endpoints[2].clusters.iasZone.zoneEnrollResponse({
 					enrollResponseCode: 0, // Success
@@ -86,8 +86,8 @@ class ventildriver extends ZigBeeDevice {
 		zclNode.endpoints[2].clusters[CLUSTER.IAS_ZONE.NAME]
 		.onZoneStatusChangeNotification = ({zoneStatus}) => {
 			
-			this.log('zoneStatus.alarm2:', zoneStatus.alarm2);
-			this.log('zoneStatus.battery:', zoneStatus.acMains);
+			if(this.print_log === 1)  this.log('zoneStatus.alarm2:', zoneStatus.alarm2);
+			if(this.print_log === 1)  this.log('zoneStatus.battery:', zoneStatus.acMains);
 
 			this.setCapabilityValue('alarm_water', zoneStatus.alarm2).catch(this.error);
 			this.setCapabilityValue('power_mains', zoneStatus.acMains).catch(this.error);

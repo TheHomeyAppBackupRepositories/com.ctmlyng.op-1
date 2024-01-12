@@ -4,12 +4,15 @@ const Homey = require('homey');
 const { Util, ZigBeeDevice } = require("homey-zigbeedriver");
 const { zclNode, CLUSTER, debug } = require('zigbee-clusters');
 
+
 class luftfoler extends ZigBeeDevice {
 
   /**
    * onInit is called when the device is initialized.
    */
 	async onNodeInit({zclNode}) {
+
+		this.print_log = 0;
 		this.log('MyDevice has been initialized');
 
 		this.setAvailable().catch(this.error);
@@ -26,7 +29,7 @@ class luftfoler extends ZigBeeDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.POWER_CONFIGURATION.NAME].on('attr.batteryVoltage', (attr_value) => {
 				try {
 							
-					this.log("measure_battery:", attr_value);
+					if(this.print_log === 1)  this.log("measure_battery:", attr_value);
 
 					if (this.hasCapability('heartbeat')){ 
 						this.setCapabilityValue('heartbeat', false).catch(this.error);
@@ -54,7 +57,7 @@ class luftfoler extends ZigBeeDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.RELATIVE_HUMIDITY_MEASUREMENT.NAME].on('attr.measuredValue', (attr_value) => {
 				try {
 							
-					this.log("measure_humidity:", attr_value);
+					if(this.print_log === 1)  this.log("measure_humidity:", attr_value);
 
 					if (this.hasCapability('heartbeat')){ 
 						this.setCapabilityValue('heartbeat', false).catch(this.error);
@@ -82,7 +85,7 @@ class luftfoler extends ZigBeeDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.TEMPERATURE_MEASUREMENT.NAME].on('attr.measuredValue', (attr_value) => {
 				try {
 							
-					this.log("measure_temperature:", attr_value);
+					if(this.print_log === 1)  this.log("measure_temperature:", attr_value);
 
 					if (this.hasCapability('heartbeat')){ 
 						this.setCapabilityValue('heartbeat', false).catch(this.error);

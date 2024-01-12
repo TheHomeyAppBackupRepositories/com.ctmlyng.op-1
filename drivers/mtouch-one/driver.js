@@ -43,7 +43,7 @@ class mTouchOneDriver extends Driver {
     //ConditionCard - HEATING
     this.cardConditionHeating = this.homey.flow.getConditionCard('flow-is_heating');
     this.cardConditionHeating.registerRunListener(async (args) => {
-    	this.status = await args.device.flowIs_Heating() === 1;
+    	this.status = await args.device.flowIs_Heating() === true;
     	return this.status;
     });
 
@@ -78,16 +78,28 @@ class mTouchOneDriver extends Driver {
     	return this.status;
     });
 
+    this._deviceRelayChanged = this.homey.flow.getDeviceTriggerCard("heat_changed");
+
+    this._deviceKeyLockChanged = this.homey.flow.getDeviceTriggerCard("keyLock_changed");
+
   }
 
-	/*
-	triggerHeating(device, state) {
-		this._deviceTurnedOn
-		.trigger(device, state)
-		.then(this.log)
+
+	triggerHeating(device) {
+
+		this._deviceRelayChanged
+		.trigger(device)
 		.catch(this.error);
 	}
-	*/
+
+  triggerKeyLock(device) {
+		this._deviceKeyLockChanged
+		.trigger(device)
+		.catch(this.error);
+	}
+
+  
+	
 
 
   /**
