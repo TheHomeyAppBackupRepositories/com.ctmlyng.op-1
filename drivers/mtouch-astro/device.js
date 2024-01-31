@@ -2,8 +2,10 @@
 const Homey = require('homey');
 const { ZigBeeDevice } = require('homey-zigbeedriver');
 const { ZCLNode, CLUSTER, Cluster } = require('zigbee-clusters');
-const CTMSpesificOnOffCluster = require('../../lib/CTMSpesificOnOffCluster');
+const CTMspecificAstroCluster = require('../../lib/CTMSpesificAstoCluster');
 const CTMSpecificTimeCluster = require('../../lib/CTMSpesificTimeCluster');
+
+
 
 class mTouchAstro extends ZigBeeDevice {
   /**
@@ -14,65 +16,55 @@ class mTouchAstro extends ZigBeeDevice {
   
   async onNodeInit({ zclNode }) {
     
-    this.print_log = 0;
-
+  
     this.log('MyDevice has been initialized');
 
     this.setAvailable().catch(this.error);
 
     if(this.hasCapability('button.refresh') === false){
 			await this.addCapability('button.refresh');
-      
-      /*
-
 			this.setCapabilityOptions('button.refresh', {
 				maintenanceAction: true,
         title: { "en": "Refresh settings", "no": "Oppdatere innstillinger" },
         desc: { "en": "Update date and time", "no": "Oppdatere dato og klokkelsett" }
 			});
-      */
 			//await this.removeCapability('button.refresh');
 		}
 
-    /*
+
     if (this.getClass() !== 'socket') {
       await this.setClass('socket').catch(this.error)
     }
-    */
 
 
+    await this.configureAttributeReporting([
+      {
+        endpointId: this.getClusterEndpoint(CLUSTER.ON_OFF),
+        cluster: CLUSTER.ON_OFF,
+        attributeName: 'on_time',
+        minInterval: 1,
+        maxInterval: 43200, // once per ~12 TIMER
+        minChange: 1,
+      },
 
+      {
+        endpointId: this.getClusterEndpoint(CLUSTER.ON_OFF),
+        cluster: CLUSTER.ON_OFF,
+        attributeName: 'device_mode',
+        minInterval: 1,
+        maxInterval: 43200, // once per ~12 TIMER
+        minChange: 1,
+      },
+
+    ]);
 
 
 
     if(this.isFirstInit()){
-
-      await this.configureAttributeReporting([
-        {
-          endpointId: this.getClusterEndpoint(CLUSTER.ON_OFF),
-          cluster: CLUSTER.ON_OFF,
-          attributeName: 'on_time',
-          minInterval: 1,
-          maxInterval: 43200, // once per ~12 TIMER
-          minChange: 1,
-        },
-  
-        {
-          endpointId: this.getClusterEndpoint(CLUSTER.ON_OFF),
-          cluster: CLUSTER.ON_OFF,
-          attributeName: 'device_mode',
-          minInterval: 1,
-          maxInterval: 43200, // once per ~12 TIMER
-          minChange: 1,
-        },
-  
-      ]).catch(this.error);
-
-
       try {
         this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].readAttributes('device_mode');
         
-        if(this.print_log === 1)  this.log("this.readattribute", this.readMode(this.readattribute.device_mode));
+        this.log("this.readattribute", this.readMode(this.readattribute.device_mode));
 
         this.setSettings({
           setting_modus: this.readMode(this.readattribute.device_mode)
@@ -103,7 +95,7 @@ class mTouchAstro extends ZigBeeDevice {
           
           this.setCapabilityValue('onoff', attr_value);
 
-          if(this.print_log === 1)  this.log('push: attr.onOff: ', attr_value);
+          this.log('push: attr.onOff: ', attr_value);
           this.setAvailable().catch(this.error);
 
         } catch (err) {
@@ -111,21 +103,19 @@ class mTouchAstro extends ZigBeeDevice {
         }
       });
 
-      
-      
       this.registerCapabilityListener('onoff', async (onOff) => {
         try {
 
           
-          //this.setClock();
+          this.setClock();
 
           if(onOff === false){
-            if(this.print_log === 1)  this.log ('set to: Off');
+            this.log ('set to: Off');
             await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOff({},{
               waitForResponse: false,
             });
           } else {
-            if(this.print_log === 1)  this.log ('set to: ON');
+            this.log ('set to: ON');
             await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOn({},{
               waitForResponse: false,
             });
@@ -133,7 +123,7 @@ class mTouchAstro extends ZigBeeDevice {
 
           this.setCapabilityValue('onoff', onOff);
 
-          if(this.print_log === 1)  this.log ('onoff.rele set to:', onOff);
+          this.log ('onoff.rele set to:', onOff);
         
         } catch (err) {
           this.error('Error in setting onoff: ', err)
@@ -157,7 +147,7 @@ class mTouchAstro extends ZigBeeDevice {
       zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.device_enable', (attr_value) => {
         try {
           this.setAvailable().catch(this.error);
-          if(this.print_log === 1)  this.log('push: attr.device_enable: ', attr_value);
+          this.log('push: attr.device_enable: ', attr_value);
 
           this.setCapabilityValue('onoff.enable', attr_value);
 
@@ -169,9 +159,21 @@ class mTouchAstro extends ZigBeeDevice {
       this.registerCapabilityListener('onoff.enable', async (device_enable) => {
         try {
           
-          await zclNode.endpoints[1].clusters.onOff.writeAttributes({ device_enable: device_enable });
+          if(device_enable === false){
+            this.log ('onoff.enable set to: Off');
+            await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOff({},{
+              waitForResponse: false,
+            });
+          } else {
+            this.log ('onoff.enable set to: ON');
+            await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOn({},{
+              waitForResponse: false,
+            });
+          }
+          
           this.setCapabilityValue('onoff.enable', device_enable);
-          if(this.print_log === 1)  this.log ('onoff.enable set to:', device_enable);
+
+          this.log ('onoff.enable set to:', device_enable);
         
         } catch (err) {
           this.error('Error in setting onoff.enable: ', err)
@@ -194,7 +196,7 @@ class mTouchAstro extends ZigBeeDevice {
       zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.device_mode', (attr_value) => {
         try {
           this.setAvailable().catch(this.error);
-          if(this.print_log === 1)  this.log('push: attr.device_mode: ', this.readMode(attr_value));
+          this.log('push: attr.device_mode: ', this.readMode(attr_value));
 
           this.setSettings({
             setting_modus: this.readMode(attr_value)
@@ -218,7 +220,7 @@ class mTouchAstro extends ZigBeeDevice {
     zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.on_time', (attr_value) => {
       try {
         this.setAvailable().catch(this.error);
-        if(this.print_log === 1)  this.log('push: attr.on_time: ', attr_value);
+        this.log('push: attr.on_time: ', attr_value);
 
       } catch (err) {
         this.error('Error in on_time: ', err);
@@ -237,7 +239,7 @@ class mTouchAstro extends ZigBeeDevice {
 			try {
 		
 				//await this.setStoreValue('regulatorsetPoint', 0).catch(this.error);
-				//if(this.print_log === 1)  this.log('this', this);
+				//this.log('this', this);
 
 				this.setClock();
 			

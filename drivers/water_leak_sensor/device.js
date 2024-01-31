@@ -11,7 +11,7 @@ class waterleaksensor extends ZigBeeDevice {
    */
 	async onNodeInit({zclNode}) {
 
-		this.print_log = 0;
+    
 		this.log('WaterLekak sensor has been initialized');
 		this.setAvailable().catch(this.error);
 
@@ -37,14 +37,14 @@ class waterleaksensor extends ZigBeeDevice {
 		/*
 		try {
 			const readattribute = await zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].readAttributes('iasCIEAddress')
-			if(this.print_log === 1)this.log('iasCIEAddress: ', readattribute.iasCIEAddress);
+			this.log('iasCIEAddress: ', readattribute.iasCIEAddress);
 
 		} catch (err) {
 			this.error('Error in readAttributes iasCIEAddress: ', err);
 
 		try {
 			const readattribute = await zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].readAttributes('zoneState')
-			if(this.print_log === 1)this.log('zoneState: ', readattribute.zoneState);
+			this.log('zoneState: ', readattribute.zoneState);
 
 		} catch (err) {
 			this.error('Error in readAttributes zoneState: ', err);
@@ -52,7 +52,7 @@ class waterleaksensor extends ZigBeeDevice {
 
 		try {
 			const readattribute = await zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].readAttributes('zoneId')
-			if(this.print_log === 1)this.log('zoneId: ', readattribute.zoneId);
+			this.log('zoneId: ', readattribute.zoneId);
 
 		} catch (err) {
 			this.error('Error in readAttributes zoneId: ', err);
@@ -63,8 +63,8 @@ class waterleaksensor extends ZigBeeDevice {
 			// Capture the zoneStatusChangeNotification
 			zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].onZoneStatusChangeNotification = ({zoneStatus}) => {
 				try {
-					if(this.print_log === 1)this.log('zoneStatus.alarm2:', zoneStatus.alarm2);
-					if(this.print_log === 1)this.log('zoneStatus.battery:', zoneStatus.battery);
+					this.log('zoneStatus.alarm2:', zoneStatus.alarm2);
+					this.log('zoneStatus.battery:', zoneStatus.battery);
 
 					this.setCapabilityValue('alarm_water', zoneStatus.alarm2).catch(this.error);
 					this.setCapabilityValue('alarm_battery', zoneStatus.battery).catch(this.error);
@@ -82,7 +82,7 @@ class waterleaksensor extends ZigBeeDevice {
 		
 			zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].onZoneEnrollRequest = () => {
 				try {
-					if(this.print_log === 1)this.log("onZoneEnrollRequest");
+					this.log("onZoneEnrollRequest");
 
 					zclNode.endpoints[1].clusters.iasZone.zoneEnrollResponse({
 						enrollResponseCode: 0, // Success

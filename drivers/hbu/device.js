@@ -15,13 +15,12 @@ Cluster.addCluster(CTMSpecificSceneCluster);
 
 class HBU extends ZigBeeDevice {
 
+
+
   /**
    * onInit is called when the device is initialized.
    */
    async onNodeInit({ zclNode }) {
-
-    this.print_log = 0;
-    
     this.log('MyDevice has been initialized');
     this.setAvailable().catch(this.error);
 
@@ -61,9 +60,10 @@ class HBU extends ZigBeeDevice {
     if(this.isFirstInit()){
 
       try {
+
         //this.readattribute = await zclNode.endpoints[1].clusters['GroupScenesConfig'].readAttributes('group_id');
-        //if(this.print_log === 1)  this.log('readAttributes', this.readattribute );
-        //if(this.print_log === 1)  this.log ('Write Group ID 1 = 0x00:');
+        //this.log('readAttributes', this.readattribute );
+        //this.log ('Write Group ID 1 = 0x00:');
         await zclNode.endpoints[1].clusters.GroupScenesConfig.writeAttributes({ group_id: 0 });
       } catch (err) {
         //this.setUnavailable(this.homey.__('device_unavailable')).catch(this.error);
@@ -90,7 +90,7 @@ class HBU extends ZigBeeDevice {
 						this.setCapabilityValue('heartbeat', true).catch(this.error);
 					}
 
-            if(this.print_log === 1)  this.log("batteryVoltage: ", value);
+            this.log("batteryVoltage: ", value);
 
 				  	return (Math.round(Util.mapValueRange(0, 32, 28, 32, value) * 100/32)); 
 				
@@ -123,7 +123,7 @@ class HBU extends ZigBeeDevice {
    * 
    */
      _onShort_pressHandler({button}) {
-      	if(this.print_log === 1)  this.log('Button Handler', button);
+      	this.log('Button Handler', button);
       if (this.hasCapability('heartbeat')){ 
         this.setCapabilityValue('heartbeat', false).catch(this.error);
         this.setCapabilityValue('heartbeat', true).catch(this.error);
@@ -139,7 +139,7 @@ class HBU extends ZigBeeDevice {
      * Triggers the 'toggled' Flow.
      */
      _onLong_pressHandler({button}) {
-		if(this.print_log === 1)  this.log('Button Handler', button);
+		this.log('Button Handler', button);
 
 		if (this.hasCapability('heartbeat')){ 
 			this.setCapabilityValue('heartbeat', false).catch(this.error);
@@ -167,9 +167,9 @@ class HBU extends ZigBeeDevice {
       this.log('device came online!');
       this.setAvailable().catch(this.error);
 
-      this.readattribute = await this.zclNode.endpoints[1].clusters['GroupScenesConfig'].readAttributes('group_id');
-      if(this.print_log === 1)  this.log('readAttributes', this.readattribute );
-      //if(this.print_log === 1)  this.log ('Write Group ID 1 = 0x0:');
+      //this.readattribute = await this.zclNode.endpoints[1].clusters['GroupScenesConfig'].readAttributes('group_id');
+      //this.log('readAttributes', this.readattribute );
+      //this.log ('Write Group ID 1 = 0x0:');
       //await zclNode.endpoints[1].clusters['GroupScenesConfig'].writeAttributes({ group_id: 0 });
         await this.zclNode.endpoints[1].clusters.GroupScenesConfig.writeAttributes({ group_id: 0 });
       } catch (err) {

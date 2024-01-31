@@ -18,160 +18,153 @@ class mTouchOne extends ZigBeeDevice {
 	 */
 	async onNodeInit({ zclNode }) {
 
-		this.print_log = 0;
-
 		this.setAvailable().catch(this.error);
 		this.log('Device Name: ', this.getName());
 
 		
 
 		/* Version 1.1.0 > 1.1.1 */
-		try{
-
-			if(this.hasCapability('operationMode') === false){
-				await this.addCapability('operationMode');
-			}
-			if(this.hasCapability('button.refresh') === false){
-				await this.addCapability('button.refresh');
-				this.setCapabilityOptions('button.refresh', {
-					maintenanceAction: true,
-					title: { "en": "Refresh settings", "no": "Oppdatere innstillinger" },
-					desc: { "en": "Send a request to the thermostat for updated information", "no": "Send en forespørsel til termostaten på oppdatert informasjon" }
-				});
-				//await this.removeCapability('button.refresh');
-			}
-
-			if(this.hasCapability('onoff') === false){
-				this.addCapability('onoff');
-			}
-
-			if(this.hasCapability('temperature_nattsenk') === true){
-				this.removeCapability('temperature_nattsenk');
-			}
-
-			if(this.hasCapability('sensorMode') === true){
-				this.removeCapability('sensorMode');
-			}
-			
-			if(this.hasCapability('thermostatLoad') === true){
-				this.removeCapability('thermostatLoad');
-			}
-
-			if(this.hasCapability('measure_temperature.nattsenk') === true){
-				this.removeCapability('measure_temperature.nattsenk');
-			}
-
-			if(this.hasCapability('night_switching') === true){
-				this.removeCapability('night_switching');
-			}
-
-		} catch (err) {
-			this.error('Error in adding and removing Capability: ', err);
+		
+		if(this.hasCapability('operationMode') === false){
+			await this.addCapability('operationMode');
+		}
+		if(this.hasCapability('button.refresh') === false){
+			await this.addCapability('button.refresh');
+			this.setCapabilityOptions('button.refresh', {
+				maintenanceAction: true,
+				title: { "en": "Refresh settings", "no": "Oppdatere innstillinger" },
+				desc: { "en": "Send a request to the thermostat for updated information", "no": "Send en forespørsel til termostaten på oppdatert informasjon" }
+			});
+			//await this.removeCapability('button.refresh');
 		}
 
+		if(this.hasCapability('onoff') === false){
+			this.addCapability('onoff');
+		}
+
+		if(this.hasCapability('temperature_nattsenk') === true){
+			this.removeCapability('temperature_nattsenk');
+		}
+
+		if(this.hasCapability('sensorMode') === true){
+			this.removeCapability('sensorMode');
+		}
+		
+		if(this.hasCapability('thermostatLoad') === true){
+			this.removeCapability('thermostatLoad');
+		}
+
+		if(this.hasCapability('measure_temperature.nattsenk') === true){
+			this.removeCapability('measure_temperature.nattsenk');
+		}
+
+		if(this.hasCapability('night_switching') === true){
+			this.removeCapability('night_switching');
+		}
 		
 
 
-		if(this.isFirstInit()){
 
-			try{
+		try{
 			
-				await this.configureAttributeReporting([
-					{
-						endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
-						cluster: CLUSTER.THERMOSTAT,
-						attributeName: 'currentAirTemperature',
-						minInterval: 0,
-						maxInterval: 1200, // once per ~30 min
-						minChange: 1,
-					},
-					{
-						endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
-						cluster: CLUSTER.THERMOSTAT,
-						attributeName: 'currentFloorTemperature',
-						minInterval: 0,
-						maxInterval: 1200, // once per ~30 min
-						minChange: 1,
-					},
-					{
-						endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
-						cluster: CLUSTER.THERMOSTAT,
-						attributeName: 'temperaturSensor',
-						minInterval: 0,
-						maxInterval: 43200, // once per ~12 timer
-						minChange: 1,
-					},
-					{
-						endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
-						cluster: CLUSTER.THERMOSTAT,
-						attributeName: 'mean_power',
-						minInterval: 0,
-						maxInterval: 1800, // once per ~30 min
-						minChange: 1,
-					},
-					{
-						endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
-						cluster: CLUSTER.THERMOSTAT,
-						attributeName: 'frost_guard',
-						minInterval: 0,
-						maxInterval: 43200, // once per ~30 min
-						minChange: 1,
-					},
-					{
-						endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
-						cluster: CLUSTER.THERMOSTAT,
-						attributeName: 'childLock',
-						minInterval: 0,
-						maxInterval: 43200, // once per ~30 min
-						minChange: 1,
-					},
-					{
-						endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
-						cluster: CLUSTER.THERMOSTAT,
-						attributeName: 'unoccupiedHeatingSetpoint',
-						minInterval: 0,
-						maxInterval: 43200, // once per ~30 min
-						minChange: 1,
-					},
-	
-					
-					{
-						endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
-						cluster: CLUSTER.THERMOSTAT,
-						attributeName: 'relayState',
-						minInterval: 0,
-						maxInterval: 900, // once per ~30 min
-						minChange: 1,
-					},
-					
-	
-	
-	
-				]);
-	
-				/*
-				await this.configureAttributeReporting([
-	
-					{
-						endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
-						cluster: CLUSTER.THERMOSTAT,
-						attributeName: 'weeklyTimerEnable',
-						minInterval: 0,
-						maxInterval: 43200, // once per ~30 min
-						minChange: 1,
-					},
-	
-	
-				]);
-				*/
+			await this.configureAttributeReporting([
+				{
+					endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
+					cluster: CLUSTER.THERMOSTAT,
+					attributeName: 'currentAirTemperature',
+					minInterval: 0,
+					maxInterval: 1200, // once per ~30 min
+					minChange: 1,
+				},
+				{
+					endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
+					cluster: CLUSTER.THERMOSTAT,
+					attributeName: 'currentFloorTemperature',
+					minInterval: 0,
+					maxInterval: 1200, // once per ~30 min
+					minChange: 1,
+				},
+				{
+					endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
+					cluster: CLUSTER.THERMOSTAT,
+					attributeName: 'temperaturSensor',
+					minInterval: 0,
+					maxInterval: 43200, // once per ~12 timer
+					minChange: 1,
+				},
+				{
+					endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
+					cluster: CLUSTER.THERMOSTAT,
+					attributeName: 'mean_power',
+					minInterval: 0,
+					maxInterval: 1800, // once per ~30 min
+					minChange: 1,
+				},
+				{
+					endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
+					cluster: CLUSTER.THERMOSTAT,
+					attributeName: 'frost_guard',
+					minInterval: 0,
+					maxInterval: 43200, // once per ~30 min
+					minChange: 1,
+				},
+				{
+					endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
+					cluster: CLUSTER.THERMOSTAT,
+					attributeName: 'childLock',
+					minInterval: 0,
+					maxInterval: 43200, // once per ~30 min
+					minChange: 1,
+				},
+				{
+					endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
+					cluster: CLUSTER.THERMOSTAT,
+					attributeName: 'unoccupiedHeatingSetpoint',
+					minInterval: 0,
+					maxInterval: 43200, // once per ~30 min
+					minChange: 1,
+				},
+
 				
-	
-	
-	
-			} catch (err) {
-				this.setUnavailable(this.homey.__('device_unavailable')).catch(this.error);
-				this.error('Error in configureAttributeReporting: ', err);
-			}
+				{
+					endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
+					cluster: CLUSTER.THERMOSTAT,
+					attributeName: 'relayState',
+					minInterval: 0,
+					maxInterval: 900, // once per ~30 min
+					minChange: 1,
+				},
+				
+
+
+
+			]);
+
+			/*
+			await this.configureAttributeReporting([
+
+				{
+					endpointId: this.getClusterEndpoint(CLUSTER.THERMOSTAT),
+					cluster: CLUSTER.THERMOSTAT,
+					attributeName: 'weeklyTimerEnable',
+					minInterval: 0,
+					maxInterval: 43200, // once per ~30 min
+					minChange: 1,
+				},
+
+
+			]);
+			*/
+
+
+
+		} catch (err) {
+			this.setUnavailable(this.homey.__('device_unavailable')).catch(this.error);
+			this.error('Error in configureAttributeReporting: ', err);
+		}
+
+
+		if(this.isFirstInit()){
 
 			try{
 				this.setStoreValue('lastMeanPower', 0);
@@ -179,19 +172,13 @@ class mTouchOne extends ZigBeeDevice {
 				this.setStoreValue('lastUpdate', null );
 				this.setStoreValue('old_setPoint', 0);
 				this.setStoreValue('store_status_costcontrol', false);
-				this.setStoreValue('regulatorMode', "0");
-				this.setStoreValue('thermostatLoad', 0);
 
 			} catch (err) {
 				this.error('Error in setStoreValues: ', err);
 			}
-			
-
 		}
 
-
-
-		if(this.print_log === 1)  this.log("181 await this.readAll();")
+		this.log("181 await this.readAll();")
 		await this.readAll();
 
 	
@@ -208,7 +195,7 @@ class mTouchOne extends ZigBeeDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.operationMode', (attr_value) => {
 				try {
 
-					if(this.print_log === 1)  this.log('push attr.opreationMode:', attr_value);
+					this.log('push attr.opreationMode:', attr_value);
 					this.setAvailable().catch(this.error);
 					if(attr_value === 0 || attr_value === 1){
 						this.setCapabilityValue('operationMode', "0");
@@ -224,13 +211,13 @@ class mTouchOne extends ZigBeeDevice {
 				}
 			});
 
-			this.registerCapabilityListener('operationMode', async (operationMode) => {
+			this.registerCapabilityListener('operationMode', async (doperationMode) => {
 				try {
 
 					this.setAvailable().catch(this.error);
-					if(this.print_log === 1)  this.log ('operationMode set to:', operationMode);
+					this.log ('operationMode set to:', operationMode);
 					if(operationMode === "0"){
-						if(this.print_log === 1)  this.log ('write power_status:', operationMode);
+						this.log ('write power_status:', operationMode);
 						await zclNode.endpoints[1].clusters.thermostat.writeAttributes({ power_status: false });
 						this.setCapabilityValue('onoff', false);
 					} else {
@@ -248,7 +235,7 @@ class mTouchOne extends ZigBeeDevice {
 
 			this.registerCapabilityListener('onoff', async (onoff) => {
 				try {
-					if(this.print_log === 1)  this.log ('onoff set to:', onoff);
+					this.log ('onoff set to:', onoff);
 					this.setCapabilityValue('onoff', onoff);
 					await zclNode.endpoints[1].clusters.thermostat.writeAttributes({ power_status: onoff });
 				} catch (err) {
@@ -270,12 +257,8 @@ class mTouchOne extends ZigBeeDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.temperaturSensor', (attr_value) => {
 			try {
 
-				if(this.print_log === 1)  this.log('push attr temperaturSensor: ', attr_value);
+				this.log('push attr temperaturSensor: ', attr_value);
 				this.setStoreValue('sensorMode', attr_value);
-
-				if(attr_value == 'Regulator'){
-					return;	
-				} 
 
 				this.setSettings({
 					setting_temperaturSensor: attr_value,
@@ -299,12 +282,12 @@ class mTouchOne extends ZigBeeDevice {
 			
 			zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.localTemperature', (attr_value) => {
 				try {
-					if(this.print_log === 1)  this.log('push localTemperature: ', attr_value);
+					this.log('push localTemperature: ', attr_value);
 					this.value = Math.round((attr_value / 100) * 10) / 10;
-					if(this.print_log === 1)  this.log('localTemperature: ', this.value);
+					this.log('localTemperature: ', this.value);
 					this.setAvailable().catch(this.error);
 		
-					//if(this.print_log === 1)  this.log('sensor_mode: ', sensor_mode);
+					//this.log('sensor_mode: ', sensor_mode);
 					if(this.getStoreValue('regulatorMode') != 1){
 						if(this.hasCapability('measure_temperature') === true){
 							this.setCapabilityValue('measure_temperature', this.value);
@@ -336,7 +319,7 @@ class mTouchOne extends ZigBeeDevice {
 				
 				try {
 					this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].readAttributes('weeklyTimerEnable')
-					if(this.print_log === 1)  this.log('weeklyTimer:', this.readattribute.weeklyTimerEnable);
+					this.log('weeklyTimer:', this.readattribute.weeklyTimerEnable);
 					this.setStoreValue('weeklyTimer', this.readattribute.weeklyTimerEnable);
 					this.setSettings({
 						setting_weeklyTimer: this.readattribute.weeklyTimerEnable,
@@ -349,7 +332,7 @@ class mTouchOne extends ZigBeeDevice {
 				zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.weeklyTimerEnable', (attr_value) => {
 					try {
 			
-						if(this.print_log === 1)  this.log('weeklyTimer: ', attr_value);
+						this.log('weeklyTimer: ', attr_value);
 						this.setSettings({
 							setting_weeklyTimer: attr_value,
 						}).catch(this.error);
@@ -376,7 +359,7 @@ class mTouchOne extends ZigBeeDevice {
 
 				this.setAvailable().catch(this.error);
 			
-				if(this.print_log === 1)  this.log('2 push regulatorsetPoint: ', attr_value);
+				this.log('2 push regulatorsetPoint: ', attr_value);
 				this.setStoreValue('regulatorsetPoint', attr_value).catch(this.error);
 
 				if(this.getStoreValue('regulatorMode') == 1){
@@ -399,7 +382,7 @@ class mTouchOne extends ZigBeeDevice {
 		this.registerCapabilityListener('dim.regulator', async (regulatorsetPoint) => {
 			try {
 
-				if(this.print_log === 1)  this.log('dim.regulator', regulatorsetPoint);
+				this.log('dim.regulator', regulatorsetPoint);
 
 				if(regulatorsetPoint >= 1){
 					await zclNode.endpoints[1].clusters.thermostat.writeAttributes({ power_status: true, regulatorsetPoint: regulatorsetPoint});
@@ -409,7 +392,7 @@ class mTouchOne extends ZigBeeDevice {
 					await zclNode.endpoints[1].clusters.thermostat.writeAttributes({ power_status: false, regulatorsetPoint: regulatorsetPoint});
 					this.setCapabilityValue('onoff', false);
 				}
-				if(this.print_log === 1)  this.log ('dim.regulator regulatorsetPoint set to:', regulatorsetPoint)
+				this.log ('dim.regulator regulatorsetPoint set to:', regulatorsetPoint)
 			
 			} catch (err) {
 				this.error('Error in setting regulatorsetPoint: ', err)
@@ -432,9 +415,9 @@ class mTouchOne extends ZigBeeDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.currentAirTemperature', (attr_value) => {
 				try {
 					this.value = Math.round((attr_value / 100) * 10) / 10;
-					if(this.print_log === 1)  this.log('currentAirTemperature: ', this.value);
+					this.log('currentAirTemperature: ', this.value);
 					
-					//if(this.print_log === 1)  this.log('sensor_mode: ', sensor_mode);
+					//this.log('sensor_mode: ', sensor_mode);
 					this.setCapabilityValue('measure_temperature.air', this.value);
 					this.setAvailable().catch(this.error);
 				} catch (err) {
@@ -456,7 +439,7 @@ class mTouchOne extends ZigBeeDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.floorSensorError', (attr_value) => {
 			try {
 
-				if(this.print_log === 1)  this.log('floorSensorError: ', attr_value);
+				this.log('floorSensorError: ', attr_value);
 
 				if(attr_value === true){
 					this.setCapabilityValue('measure_temperature.floor', -99).catch(this.error);
@@ -482,13 +465,11 @@ class mTouchOne extends ZigBeeDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.externalSensorError', (attr_value) => {
 			try {
 
-				if(this.print_log === 1)  this.log('externalSensorError: ', attr_value);
+				this.log('externalSensorError: ', attr_value);
 
 				if(attr_value === true){
 					//this.setCapabilityValue('measure_temperature.floor', -99).catch(this.error);
 					this.externalSensorError_status = "Error";
-
-
 					this.setWarning(this.homey.__('ExternalSensorError')).catch(this.error);
 
 				} else {
@@ -520,7 +501,7 @@ class mTouchOne extends ZigBeeDevice {
 				try {
 					this.setAvailable().catch(this.error);
 					this.value = Math.round((attr_value / 100) * 10) / 10;
-					if(this.print_log === 1)  this.log('currentFloorTemperature: ', this.value);
+					this.log('currentFloorTemperature: ', this.value);
 					this.setCapabilityValue('measure_temperature.floor', this.value).catch(this.error);
 
 				} catch (err) {
@@ -541,7 +522,7 @@ class mTouchOne extends ZigBeeDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.occupiedHeatingSetpoint', (attr_value) => {
 			try {
 				this.value = Math.round((attr_value / 100) * 10) / 10;
-				if(this.print_log === 1)  this.log('occupiedHeatingSetpoint: ', this.value);					
+				this.log('occupiedHeatingSetpoint: ', this.value);					
 
 			} catch (err) {
 				this.error('Error in occupiedHeatingSetpoint: ', err);
@@ -554,10 +535,10 @@ class mTouchOne extends ZigBeeDevice {
 		this.registerCapabilityListener('target_temperature', async (regulatorsetPoint) => {
 			try {
 
-				if(this.print_log === 1)  this.log("target_temperature set to", regulatorsetPoint);
+				this.log("target_temperature set to", regulatorsetPoint);
 				this.setAvailable().catch(this.error);
 				await zclNode.endpoints[1].clusters.thermostat.writeAttributes({ operationMode: 3, regulatorsetPoint: regulatorsetPoint});
-				if(this.print_log === 1)  this.log ('Change operationMode to ON');
+				this.log ('Change operationMode to ON');
 				this.setCapabilityValue('operationMode', "3");
 	
 			} catch (err) {
@@ -577,7 +558,7 @@ class mTouchOne extends ZigBeeDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.unoccupiedHeatingSetpoint', (attr_value) => {
 			try {
 				this.value = Math.round((attr_value / 100) * 10) / 10;
-				if(this.print_log === 1)  this.log('unoccupiedHeatingSetpoint: ', this.value);
+				this.log('unoccupiedHeatingSetpoint: ', this.value);
 				
 				this.setSettings({
 					setting_night_switching_temp: this.value,
@@ -603,13 +584,12 @@ class mTouchOne extends ZigBeeDevice {
 				try {
 					this.setAvailable().catch(this.error);
 					
-					if(this.print_log === 1)  this.log('Push relayState: ', attr_value);
+					this.log('relayState: ', attr_value);
 					this.setCapabilityValue('heat', attr_value).catch(this.error);
 
+	
 					this.update_consumption(attr_value);
-
-					this.driver.triggerHeating(this);
-
+					
 				
 				} catch (err) {
 					this.error('Error in relayState: ', err);
@@ -628,7 +608,7 @@ class mTouchOne extends ZigBeeDevice {
 
 		zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.regulatorMode', (attr_value) => {
 			try {
-				if(this.print_log === 1)  this.log('push regulatorMode: ', attr_value);
+				this.log('push regulatorMode: ', attr_value);
 				this.switchTermostatFunksjon(attr_value);
 
 			} catch (err) {
@@ -652,7 +632,7 @@ class mTouchOne extends ZigBeeDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.mean_power', (mean_power) => {
 				try {
 
-					if(this.print_log === 1)  this.log('push measure_power: ', mean_power);
+					this.log('measure_power: ', mean_power);
 
 					if(this.getSetting('setting_use_average') === true){
 						return;
@@ -683,7 +663,7 @@ class mTouchOne extends ZigBeeDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.frost_guard', (attr_value) => {
 				try {
 
-					if(this.print_log === 1)  this.log('frost_guard: ', attr_value);
+					this.log('frost_guard: ', attr_value);
 
 					this.setSettings({
 						setting_frost_guard: attr_value,
@@ -710,15 +690,13 @@ class mTouchOne extends ZigBeeDevice {
 				zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.childLock', (attr_value) => {
 					try {
 
-						if(this.print_log === 1)  this.log('keyLock: ', attr_value);
+						this.log('keyLock: ', attr_value);
 
 						this.setSettings({
 							setting_keyLock: attr_value,
 						}).catch(this.error);
 
 						this.setCapabilityValue('keyLock', attr_value);
-
-						this.driver.triggerKeyLock(this);
 
 					} catch (err) {
 						this.error('Error in keyLock: ', err);
@@ -731,7 +709,7 @@ class mTouchOne extends ZigBeeDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.THERMOSTAT.NAME].on('attr.thermostatLoad', (attr_value) => {
 				try {
 
-					if(this.print_log === 1)  this.log('push attr thermostatLoad: ', attr_value);
+					this.log('push attr thermostatLoad: ', attr_value);
 
 					this.setSettings({
 						setting_floor_watt: attr_value,
@@ -778,7 +756,7 @@ class mTouchOne extends ZigBeeDevice {
 			try {
 		
 				//await this.setStoreValue('regulatorsetPoint', 0).catch(this.error);
-				//if(this.print_log === 1)  this.log('this', this);
+				//this.log('this', this);
 
 				this.setClock();
 				
@@ -793,7 +771,7 @@ class mTouchOne extends ZigBeeDevice {
 
 
 		// Read all Capability
-		if(this.print_log === 1)  this.log("795 await this.refreshSettings();")
+		this.log("795 await this.refreshSettings();")
 		await this.refreshSettings();
 		
 		
@@ -809,9 +787,9 @@ class mTouchOne extends ZigBeeDevice {
 	async flowCangeThermostatState(args){
 		try {
 
-			if(this.print_log === 1)  this.log ('operationMode set to:', args.flow_tilstand);
+			this.log ('operationMode set to:', args.flow_tilstand);
 			if(args.flow_tilstand === "0"){
-				if(this.print_log === 1)  this.log ('write power_status:', args.flow_tilstand);
+				this.log ('write power_status:', args.flow_tilstand);
 				await this.zclNode.endpoints[1].clusters.thermostat.writeAttributes({ power_status: false });
 			} else {
 				await this.zclNode.endpoints[1].clusters.thermostat.writeAttributes({ operationMode: args.flow_tilstand });
@@ -819,7 +797,7 @@ class mTouchOne extends ZigBeeDevice {
 			return true;
 
 		} catch (err) {
-			if(this.print_log === 1)  this.log('flowCangeThermostatState: ', err);
+			this.log('flowCangeThermostatState: ', err);
 			throw new Error(this.homey.__('flow_CangeThermostatStateError'));
 		}
 	}
@@ -839,7 +817,7 @@ class mTouchOne extends ZigBeeDevice {
 			*/
 			
 			
-			if(this.print_log === 1)  this.log ('regulatorMode set to:', args.flow_mode);
+			this.log ('regulatorMode set to:', args.flow_mode);
 			
 			if(args.flow_mode == 1){
 				
@@ -861,7 +839,7 @@ class mTouchOne extends ZigBeeDevice {
 			return true;
 
 		} catch (err) {
-			if(this.print_log === 1)  this.log('flowCangeThermostatMode: ', err);
+			this.log('flowCangeThermostatMode: ', err);
 			throw new Error('Error! Unable to change thermostat mode');
 		}
 	}
@@ -887,13 +865,13 @@ class mTouchOne extends ZigBeeDevice {
 
 		this.new_setpoint = this.setpoint;
 		
-		if(this.print_log === 1)  this.log('Old Costcontrol:', this.status_costcontrol);
+		this.log('Old Costcontrol:', this.status_costcontrol);
 
 		
 		if((this.sensorMode === 'Regulator') || (this.sensorMode === 'MVRegulator')){
 		
 			this.setCapabilityValue('cost_control', false).catch(this.error);
-			if(this.print_log === 1)  this.log('Error! CostControl not supported in regulatormode', this.sensorMode);
+			this.log('Error! CostControl not supported in regulatormode', this.sensorMode);
 			
 			throw new Error(this.homey.__('flow_CostControlErrorMode'));
 
@@ -901,7 +879,7 @@ class mTouchOne extends ZigBeeDevice {
 
 		if(this.getCapabilityValue('operationMode') != "3"){
 			this.setCapabilityValue('cost_control', false).catch(this.error);
-			if(this.print_log === 1)  this.log('Error! CostControl only supportet in operation mode ON');
+			this.log('Error! CostControl only supportet in operation mode ON');
 			
 			throw new Error(this.homey.__('flow_CostControlErrorState'));
 		}
@@ -918,21 +896,21 @@ class mTouchOne extends ZigBeeDevice {
 			this.new_setpoint = (this.oldSetPont + this.temperature);
 			
 		} else {
-			if(this.print_log === 1)  this.log('Costcontrol nothting to do:', this.new_setpoint)
+			this.log('Costcontrol nothting to do:', this.new_setpoint)
 			return false;
 
 		}
 
-		if(this.print_log === 1)  this.log('oldSetPont:', (this.oldSetPont));
-		if(this.print_log === 1)  this.log('(setpoint + temperature):', (this.setpoint + this.temperature));
-		if(this.print_log === 1)  this.log('Cost control sepoint just:', this.temperature);
-		if(this.print_log === 1)  this.log('Old setpoint:', this.oldSetPont);
-		if(this.print_log === 1)  this.log('New setpoint:', this.new_setpoint);
+		this.log('oldSetPont:', (this.oldSetPont));
+		this.log('(setpoint + temperature):', (this.setpoint + this.temperature));
+		this.log('Cost control sepoint just:', this.temperature);
+		this.log('Old setpoint:', this.oldSetPont);
+		this.log('New setpoint:', this.new_setpoint);
 		
 
 		
 		if((this.new_setpoint < 5) || (this.new_setpoint > 40)){
-			if(this.print_log === 1)  this.log('New occupiedHeatingSetpoint out of range:', this.new_setpoint)
+			this.log('New occupiedHeatingSetpoint out of range:', this.new_setpoint)
 
 			this.setCapabilityValue('cost_control', false).catch(this.error);
 			this.setStoreValue('store_status_costcontrol', false).catch( this.error )
@@ -951,13 +929,13 @@ class mTouchOne extends ZigBeeDevice {
 			this.setCapabilityValue('cost_control', true).catch(this.error);
 			this.setCapabilityValue('target_temperature', this.new_setpoint).catch(this.error);
 
-			if(this.print_log === 1)  this.log('occupiedHeatingSetpoint attribute set to:', this.new_setpoint)
+			this.log('occupiedHeatingSetpoint attribute set to:', this.new_setpoint)
 
 			return;
 			
 		
 		} catch (err) {
-			if(this.print_log === 1)  this.log('cardEnableCostCongroll: ', err)
+			this.log('cardEnableCostCongroll: ', err)
 			throw new Error(this.homey.__('flow_CostControlEnableFailed'));
 		}
 	}
@@ -977,20 +955,20 @@ class mTouchOne extends ZigBeeDevice {
 		this.setpoint = this.getCapabilityValue('target_temperature');
 		this.sensorMode = this.getStoreValue('sensorMode');
 
-		if(this.print_log === 1)  this.log('Old setpoint:', this.setpoint);
-		if(this.print_log === 1)  this.log('New setpoint:', this.oldSetPont);
+		this.log('Old setpoint:', this.setpoint);
+		this.log('New setpoint:', this.oldSetPont);
 
 		if((this.sensorMode === 'Regulator') || (this.sensorMode === 'MVRegulator')){
 		
 			this.setCapabilityValue('cost_control', false).catch(this.error);
-			if(this.print_log === 1)  this.log('Error! Cost Control not supported in regulatormode', this.sensorMode);
+			this.log('Error! Cost Control not supported in regulatormode', this.sensorMode);
 			throw new Error(this.homey.__('flow_CostControlErrorMode'));
 
 		}
 
 		if(this.getCapabilityValue('operationMode') != "3"){
 			this.setCapabilityValue('cost_control', false).catch(this.error);
-			if(this.print_log === 1)  this.log('Error! CostControl only supportet in operation state ON');
+			this.log('Error! CostControl only supportet in operation state ON');
 			throw new Error(this.homey.__('flow_CostControlErrorState'));
 		}
 
@@ -998,25 +976,25 @@ class mTouchOne extends ZigBeeDevice {
 		if(this.status_costcontrol == true){
 			
 			if (this.oldSetPont < 5 || this.oldSetPont > 40){
-				if(this.print_log === 1)  this.log('Error! Setpoint  attribute set to:', this.oldSetPont);
+				this.log('Error! Setpoint  attribute set to:', this.oldSetPont);
 				throw new Error(this.homey.__('flow_CostControlNumerError'), this.oldSetPont);
 			}
 			//Disable cost control
 			try {
 				await this.zclNode.endpoints[1].clusters.thermostat.writeAttributes({ occupiedHeatingSetpoint: this.oldSetPont * 100});
-				if(this.print_log === 1)  this.log('occupiedHeatingSetpoint attribute set to:', this.oldSetPont);
+				this.log('occupiedHeatingSetpoint attribute set to:', this.oldSetPont);
 
 				this.setCapabilityValue('cost_control', false);
 				this.setStoreValue('store_status_costcontrol', false).catch(this.error);
 				this.setCapabilityValue('target_temperature', this.oldSetPont);
 
 			} catch (err) {
-				if(this.print_log === 1)  this.log('cardEnableCostControl: ', err)
+				this.log('cardEnableCostControl: ', err)
 				throw new Error(this.homey.__('flow_CostControlDisableFailed'));
 			}
 			
 		} else {
-			if(this.print_log === 1)  this.log('cardDeactivateCostControl nothting to do:', this.status_costcontrol)
+			this.log('cardDeactivateCostControl nothting to do:', this.status_costcontrol)
 			return;
 
 		}
@@ -1035,13 +1013,14 @@ class mTouchOne extends ZigBeeDevice {
 
 	async flowIs_Heating(){
 		try {
+
 			if (this.getCapabilityValue('heat') === true){
 				return true;
 			} else{
 				return false;
 			}
 		} catch (err) {
-			if(this.print_log === 1)  this.log('flowIs_Heating: ', err);
+			this.log('flowIs_Heating: ', err);
 			throw new Error(this.homey.__('flow_isHeatingError'));
 		}
 
@@ -1049,14 +1028,14 @@ class mTouchOne extends ZigBeeDevice {
 
 	/********************************************************************************/
 	/*
-	/*      FLOWCARD - flowIs_Mode
+	/*      FLOWCARD - flowIs_Heating
 	/*      
 	**********************************************************************************/ 
 
 
 	async flowIs_Mode(args){
-			if(this.print_log === 1)  this.log("args", args.flow_relay_thermostatmode);
-			if(this.print_log === 1)  this.log("flowIs_Mode", this.getCapabilityValue('operationMode'));
+			this.log("args", args.flow_relay_thermostatmode);
+			this.log("flowIs_Mode", this.getCapabilityValue('operationMode'));
 
 			if(args.flow_relay_thermostatmode === this.getCapabilityValue('operationMode')) return true; else return false;
 
@@ -1070,8 +1049,8 @@ class mTouchOne extends ZigBeeDevice {
 
 
 	async flowIs_regulatorMode(args){
-			if(this.print_log === 1)  this.log("args", args.flow_regulatorMode);
-			if(this.print_log === 1)  this.log("Flow regulatorMode", this.getStoreValue('regulatorMode'));
+			this.log("args", args.flow_regulatorMode);
+			this.log("Flow regulatorMode", this.getStoreValue('regulatorMode'));
 			if(args.flow_regulatorMode === this.getStoreValue('regulatorMode')) return true; else return false;
 
 	}
@@ -1185,18 +1164,18 @@ async flowIs_KeyLock(){
 		if (event.changedKeys.includes('setting_use_average')) {
 
 
-			if(this.print_log === 1)  this.log('setting_use_average: ', event.newSettings.setting_use_average);
+			this.log('setting_use_average: ', event.newSettings.setting_use_average);
 
 			if(event.newSettings.setting_use_average === true){
 
-				/*
+
 				try {
 					this.readattribute = await this.zclNode.endpoints[1].clusters[CLUSTER.BASIC.NAME].readAttributes(
 						'appVersion',
 						'swBuildId',
 						'hwVersion');
 					
-					if(this.print_log === 1)this.log('SW:', this.readattribute);
+					this.log('SW:', this.readattribute);
 
 					this.setSettings({
 						setting_version: 'Thermostat: ' + this.readattribute_sw.appVersion + ' RF: ' + this.readattribute_sw.swBuildId,
@@ -1205,7 +1184,6 @@ async flowIs_KeyLock(){
 				} catch (err) {
 					this.error('Error readAttributes BASIC: ', err)
 				}
-				*/
 
 
 				this.setStoreValue('lastUpdate', Date.now()).catch(this.error);
@@ -1235,7 +1213,7 @@ async flowIs_KeyLock(){
         **********************************************************************************/ 
 
 		if (event.changedKeys.includes('setting_frost_guard')) {
-			if(this.print_log === 1)  this.log('setting_frost_guard: ', event.newSettings.setting_frost_guard);
+			this.log('setting_frost_guard: ', event.newSettings.setting_frost_guard);
 
 			this.zclNode.endpoints[1].clusters.thermostat.writeAttributes({ frost_guard: event.newSettings.setting_frost_guard}).catch(this.error);
 
@@ -1251,7 +1229,7 @@ async flowIs_KeyLock(){
         **********************************************************************************/ 
 		/*
 		if (event.changedKeys.includes('setting_weeklyTimer')) {
-			if(this.print_log === 1)  this.log('setting_weeklyTimer: ', event.newSettings.setting_weeklyTimer);
+			this.log('setting_weeklyTimer: ', event.newSettings.setting_weeklyTimer);
 
 			this.zclNode.endpoints[1].clusters.thermostat.writeAttributes({ weeklyTimerEnable: event.newSettings.setting_weeklyTimer}).catch(this.error);
 
@@ -1269,7 +1247,7 @@ async flowIs_KeyLock(){
 
 
 		if (event.changedKeys.includes('setting_keyLock')) {
-			if(this.print_log === 1)  this.log('setting_keyLock: ', event.newSettings.setting_keyLock);
+			this.log('setting_keyLock: ', event.newSettings.setting_keyLock);
 
 			this.zclNode.endpoints[1].clusters.thermostat.writeAttributes({ childLock: event.newSettings.setting_keyLock}).catch(this.error);
 	
@@ -1286,7 +1264,7 @@ async flowIs_KeyLock(){
 
 		if (event.changedKeys.includes('setting_power_meter')) {
 
-			if(this.print_log === 1)  this.log('power_meter: ', event.newSettings.setting_power_meter);
+			this.log('power_meter: ', event.newSettings.setting_power_meter);
 			
 			this.setCapabilityValue('meter_power', event.newSettings.setting_power_meter).catch(this.error);
 			this.setStoreValue('sumPowerMeter', event.newSettings.setting_power_meter).catch(this.error);
@@ -1347,14 +1325,14 @@ async flowIs_KeyLock(){
 async switchTermostatFunksjon(modus) {
     
 	
-	if(this.print_log === 1)  this.log('switchTermostatFunksjon', modus );
+	this.log('switchTermostatFunksjon', modus );
 	this.setStoreValue('regulatorMode', modus).catch(this.error);
 	
 	try {
 		
 		this.tempregpoint = this.getStoreValue('regulatorsetPoint');
 
-		if(this.print_log === 1)  this.log('regulatorsetPoint', this.tempregpoint );
+		this.log('regulatorsetPoint', this.tempregpoint );
 
 
 		if(modus == 1){
@@ -1403,7 +1381,7 @@ async switchTermostatFunksjon(modus) {
 		}
 
 
-		if(this.print_log === 1)  this.log("1354 await this.refreshSettings();")
+		this.log("1354 await this.refreshSettings();")
 		this.refreshSettings();
 		
 
@@ -1445,7 +1423,7 @@ async readAll(){
 		
 		this.setAvailable().catch(this.error);
 
-		if(this.print_log === 1)  this.log('readAttributes', this.readattribute );
+		this.log('readAttributes', this.readattribute );
 
 		await this.setStoreValue('thermostatLoad', this.readattribute.thermostatLoad).catch(this.error);
 		await this.setCapabilityValue('keyLock', this.readattribute.childLock).catch(this.error);
@@ -1473,18 +1451,10 @@ async readAll(){
 				this.removeCapability('target_temperature');
 			}
 
-			if (this.hasCapability('dim.regulator') === true) {
-				this.setCapabilityValue('dim.regulator', this.readattribute.regulatorsetPoint).catch(this.error);
-			}
-
 		} else {
 
 			if(this.hasCapability('dim.regulator') === true){
 				this.removeCapability('dim.regulator');
-			}
-
-			if (this.hasCapability('target_temperature') === true) {
-				this.setCapabilityValue('target_temperature', this.readattribute.regulatorsetPoint).catch(this.error);
 			}
 
 		}
@@ -1526,21 +1496,14 @@ async readAll(){
 			'swBuildId',
 			'hwVersion');
 		
-		if(this.print_log === 1)  this.log('SW:', this.readattribute_sw);
+		this.log('SW:', this.readattribute_sw);
 
 		
-
-		if(this.print_log === 1)  this.log('setting_floorSensorError:', this.floorSensorError_status);
-		if(this.print_log === 1)  this.log('setting_externalSensorError:', this.externalSensorError_status);
-		if(this.print_log === 1)  this.log('setting_night_switching_temp:', (Math.round((this.readattribute.unoccupiedHeatingSetpoint / 100) * 10) / 10));
-		if(this.print_log === 1)  this.log('setting_version:', 'Thermostat: ' + this.readattribute_sw.appVersion + ' RF: ' + this.readattribute_sw.swBuildId);
-
-
-		await this.setSettings({
+		this.setSettings({
 			setting_floorSensorError: this.floorSensorError_status,
 			setting_externalSensorError: this.externalSensorError_status,
 			setting_night_switching_temp: (Math.round((this.readattribute.unoccupiedHeatingSetpoint / 100) * 10) / 10),
-			setting_version: 'Thermostat: ' + this.readattribute_sw.appVersion + ' RF: ' + this.readattribute_sw.swBuildId
+			setting_version: 'Thermostat: ' + this.readattribute_sw.appVersion + ' RF: ' + this.readattribute_sw.swBuildId,
 		}).catch(this.error);
 
 		await this.setCapabilityValue('measure_temperature.air', (Math.round((this.readattribute.currentAirTemperature / 100) * 10) / 10)).catch(this.error);
@@ -1549,11 +1512,11 @@ async readAll(){
 		if(this.readattribute.operationMode == 0 || this.readattribute.operationMode == 1){
 			await this.setCapabilityValue('operationMode', "0").catch(this.error);
 		} else {
-			if(this.print_log === 1)  this.log('this.readattribute.operationMode', this.readattribute.operationMode);
+			this.log('this.readattribute.operationMode', this.readattribute.operationMode);
 			await this.setCapabilityValue('operationMode', this.readattribute.operationMode.toString(8)).catch(this.error);
 		}
 
-		if(this.print_log === 1)  this.log("1478 await this.refreshSettings();")
+		this.log("1478 await this.refreshSettings();")
 		await this.refreshSettings();
 
 	
@@ -1579,38 +1542,36 @@ async refreshSettings() {
 	/*
 	try {
 		this.log('CapabilityValues');
-		this.log('sensorMode', this.getStoreValue('sensorMode'));
+		this.log('sensorMode', this.getCapabilityValue('sensorMode'));
 		this.log('frost_guard', this.getCapabilityValue('frost_guard'));
-		this.log('regulatorMode', this.getStoreValue('regulatorMode').toString(8));
+		this.log('night_switching', this.getCapabilityValue('night_switching'));
+		this.log('thermostatLoad', this.getCapabilityValue('thermostatLoad'));
+		this.log('temperature_nattsenk', this.getCapabilityValue('temperature_nattsenk'));
 		this.log('keyLock', this.getCapabilityValue('keyLock'));
-		this.log('thermostatLoad', this.getStoreValue('thermostatLoad'));
 
-	
 		this.log('getSettings', this.getSettings());
 
 	} catch (err) {
 		this.error('Error in CapabilityValues: ', err);
 	}
 	*/
-	
-	if(this.getStoreValue('sensorMode') != 'Regulator'){
-		await this.setSettings({
-			setting_temperaturSensor: this.getStoreValue('sensorMode'),
-		}).catch(this.error );
-	}
+
 
 	await this.setSettings({
-		
+		setting_temperaturSensor: this.getStoreValue('sensorMode'),
 		setting_frost_guard: this.getCapabilityValue('frost_guard'),
 		setting_regulatorfuksjon: this.getStoreValue('regulatorMode').toString(8),
+		//setting_weeklyTimer: this.getStoreValue('weeklyTimer'),
+		//setting_night_switching_temp: this.getCapabilityValue('measure_temperature.nattsenk'),
 		setting_keyLock: this.getCapabilityValue('keyLock'),
 		setting_floor_watt: this.getStoreValue('thermostatLoad')
 	}).catch(this.error );
-	
-	
+
+
 	//this.log('getSettings2', this.getSettings());
 
 
+	
 
 
 
@@ -1631,19 +1592,15 @@ async setClock(){
     this.minutt =  this.time.toLocaleTimeString("sv-SE",{minute: 'numeric', timeZone: this.sys})
 
     //Displaying the extracted variables on the console
+    this.log("Lokalt år: ", this.ar); //log(‘Lokalt år är typ:’,typeof(ar))
+    this.log("Lokal mnd:",  this.mnd); //log(‘Lokal månad är typ:’,typeof(manad));
+    this.log("Lokal dag:",  this.dag);
+    this.log("Lokal time:",  this.hours);
+    this.log("Lokal minutt:",  this.minutt);
+    //Displaying time zone of the Homey
+    this.log("timeZone:",this.sys);
 
-	if(this.print_log === 1){
-
-		this.log("Lokalt år: ", this.ar); //log(‘Lokalt år är typ:’,typeof(ar))
-		this.log("Lokal mnd:",  this.mnd); //log(‘Lokal månad är typ:’,typeof(manad));
-		this.log("Lokal dag:",  this.dag);
-		this.log("Lokal time:",  this.hours);
-		this.log("Lokal minutt:",  this.minutt);
-		//Displaying time zone of the Homey
-		this.log("timeZone:",this.sys);
-
-	}
-
+    
     this.localTime[0] = 20;
     this.localTime[1] = this.ar % 100;
     this.localTime[2] = this.mnd;
@@ -1676,20 +1633,18 @@ async setClock(){
 
   async update_consumption(power_usage){
 
-	if(this.print_log === 1)  this.log('setting_use_average:', this.getSetting('setting_use_average'))
+	this.log('setting_use_average:', this.getSetting('setting_use_average'))
 
 	if(this.getSetting('setting_use_average') === true){
-		if(this.print_log === 1)  this.log('Use real power');
+		this.log('Use real power');
 		if(power_usage === true){
 			power_usage = this.getSetting('setting_floor_watt');
 		} else {
 			power_usage = 0;
 		}		
-		if(this.print_log === 1)  this.log('real_power : ', power_usage);
+		this.log('real_power : ', power_usage);
 	} else {
-
-		if(this.print_log === 1)  this.log('mean_power : ', power_usage);
-		if(power_usage === true || power_usage === false) return;
+		this.log('mean_power : ', power_usage);
 	}
 	
 	this.thisUpdate = Date.now();
@@ -1709,8 +1664,8 @@ async setClock(){
 			setting_power_meter: (this.sumPowerMeter + this.meanPowerkWh),
 		}).catch(this.error);
 
-		/*
 		this.log('meanPowerkWh : ', this.meanPowerkWh);
+
 		this.log('thisUpdate : ', this.thisUpdate);
 		this.log('lastUpdate : ', this.lastUpdate);
 		this.log('Min siden siste endring: ', (((this.thisUpdate - this.lastUpdate) / 1000) / 60));
@@ -1718,7 +1673,6 @@ async setClock(){
 		
 
 		this.log('sumPowerMeter : ', this.sumPowerMeter);
-		*/
 		
 		this.setCapabilityValue('meter_power', this.sumPowerMeter + this.meanPowerkWh).catch(this.error);
 

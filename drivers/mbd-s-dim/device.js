@@ -3,9 +3,8 @@
 
 const { ZigBeeLightDevice } = require('homey-zigbeedriver');
 const { CLUSTER, ZCLNode } = require('zigbee-clusters');
-const CTMSpesificOnOffCluster = require('../../lib/CTMSpesificOnOffCluster');
+const CTMmbdCluster = require('../../lib/CTMSpecificMBDCluster');
 
-const this.print_log = 0;
 
 class mdb_dim extends ZigBeeLightDevice {
 
@@ -14,7 +13,6 @@ class mdb_dim extends ZigBeeLightDevice {
    */
   async onNodeInit({ zclNode }) {
       //this.enableDebug();
-	  this.print_log = 0;
       this.setAvailable().catch(this.error);
 
 
@@ -64,7 +62,7 @@ class mdb_dim extends ZigBeeLightDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.onOff', (attr_value) => {
 			try {
 				this.setAvailable().catch(this.error);
-				if(this.print_log === 1)  this.log('push: attr.onOff: ', attr_value);
+				this.log('push: attr.onOff: ', attr_value);
 
 				this.setCapabilityValue('onoff', attr_value);
 
@@ -77,12 +75,12 @@ class mdb_dim extends ZigBeeLightDevice {
 			try {
 				
 				if(onOff === false){
-					if(this.print_log === 1)  this.log ('set to: Off');
+					this.log ('set to: Off');
 					await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOff({},{
 						waitForResponse: false,
 					});
 				} else {
-					if(this.print_log === 1)  this.log ('set to: ON');
+					this.log ('set to: ON');
 					await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOn({},{
 						waitForResponse: false,
 					});
@@ -90,7 +88,7 @@ class mdb_dim extends ZigBeeLightDevice {
 				
 				this.setCapabilityValue('onoff', onOff);
 
-				if(this.print_log === 1)  this.log ('onoff.rele set to:', onOff);
+				this.log ('onoff.rele set to:', onOff);
 			
 			} catch (err) {
 				this.error('Error in setting onoff: ', err)
@@ -118,7 +116,7 @@ class mdb_dim extends ZigBeeLightDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.relay_state', (attr_value) => {
 			try {
 						
-				if(this.print_log === 1)  this.log('push relay_state: ', attr_value);
+				this.log('push relay_state: ', attr_value);
 				//this.enableDebug();
 				this.setAvailable().catch(this.error);
 				this.setCapabilityValue('onoff.rele', attr_value).catch(this.error);
@@ -134,7 +132,7 @@ class mdb_dim extends ZigBeeLightDevice {
 		this.registerCapabilityListener('onoff.rele', async (relay_state) => {
 			try {
 				await zclNode.endpoints[1].clusters.onOff.writeAttributes({ relay_state: relay_state });
-				if(this.print_log === 1)  this.log ('relay_state set to:', relay_state)
+				this.log ('relay_state set to:', relay_state)
 				this.setCapabilityValue('onoff.rele', relay_state).catch(this.error);
         
 			} catch (err) {
@@ -165,11 +163,11 @@ class mdb_dim extends ZigBeeLightDevice {
             report: 'pirOccupiedToUnoccupiedDelay',
             reportParser(data) {
 				
-              if(this.print_log === 1)  this.log('pirOccupiedToUnoccupiedDelay sek : ', data);
+              this.log('pirOccupiedToUnoccupiedDelay sek : ', data);
               if(data < 60){
 
 				if(this.data_format != 1){
-					if(this.print_log === 1)  this.log("Change CapabilityOptions runtime");
+					this.log("Change CapabilityOptions runtime");
 					this.setCapabilityOptions("runtime", {
 							title: {
 							  en: "Time on in seconds",
@@ -185,7 +183,7 @@ class mdb_dim extends ZigBeeLightDevice {
               } else {
 
 				if(this.data_format != 2){
-					if(this.print_log === 1)  this.log("Change CapabilityOptions runtime");
+					this.log("Change CapabilityOptions runtime");
 					this.setCapabilityOptions("runtime", {
 							title: {
 								en: "Time on in minutes",
@@ -225,7 +223,7 @@ class mdb_dim extends ZigBeeLightDevice {
             },
             report: 'occupancy',
             reportParser(data) {
-              if(this.print_log === 1)  this.log('occupancy : ', (data));
+              this.log('occupancy : ', (data));
               if(data.occupied) return true; else return false;
             },
             endpoint: this.getClusterEndpoint(CLUSTER.OCCUPANCY_SENSING),
@@ -252,7 +250,7 @@ class mdb_dim extends ZigBeeLightDevice {
             },
             report: 'measuredValue',
             reportParser(data) {
-              //if(this.print_log === 1)  this.log('pirOccupiedToUnoccupiedDelay min : ', (data/60));
+              //this.log('pirOccupiedToUnoccupiedDelay min : ', (data/60));
               //return data/60;
               this.setAvailable().catch(this.error);
               
@@ -279,7 +277,7 @@ class mdb_dim extends ZigBeeLightDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.LEVEL_CONTROL.NAME].on('attr.currentLevel', (attr_value) => {
 				try {
 							
-					if(this.print_log === 1)  this.log('attr.currentLevel: ', attr_value);
+					this.log('attr.currentLevel: ', attr_value);
 
 					/*
 					if(this.getCapabilityValue('onoff') === false){
@@ -318,7 +316,7 @@ class mdb_dim extends ZigBeeLightDevice {
 						}
 					);
 
-				if(this.print_log === 1)  this.log ('dim currentLevel set to:', currentLevel);
+				this.log ('dim currentLevel set to:', currentLevel);
 				
 			} catch (err) {
 					//this.setUnavailable().catch(this.error);
@@ -344,7 +342,7 @@ class mdb_dim extends ZigBeeLightDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.BALLAST_CONFIGURATION.NAME].on('attr.maxLevel', (attr_value) => {
 			try {
 
-				if(this.print_log === 1)  this.log('maxLevel: ', attr_value);
+				this.log('maxLevel: ', attr_value);
 				this.setSettings({
 					setting_max_dim: attr_value,
 				});
@@ -370,7 +368,7 @@ class mdb_dim extends ZigBeeLightDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.BALLAST_CONFIGURATION.NAME].on('attr.minLevel', (attr_value) => {
 			try {
 
-				if(this.print_log === 1)  this.log('minLevel: ', attr_value);
+				this.log('minLevel: ', attr_value);
 				this.setSettings({
 					setting_min_dim: attr_value,
 				});
@@ -398,7 +396,7 @@ class mdb_dim extends ZigBeeLightDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.BALLAST_CONFIGURATION.NAME].on('attr.powerOnLevel', (attr_value) => {
 			try {
 
-				if(this.print_log === 1)  this.log('powerOnLevel: ', attr_value);
+				this.log('powerOnLevel: ', attr_value);
 				this.setSettings({
 					setting_on_dim: attr_value,
 				});

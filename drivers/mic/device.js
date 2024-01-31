@@ -3,7 +3,10 @@
 const { ZigBeeDevice } = require("homey-zigbeedriver");
 const { CLUSTER} = require('zigbee-clusters');
 
+
+
 const CTMOnOffBoundCluster = require('../../lib/CTMOnOffBoundCluster');
+
 
 
 class mic extends ZigBeeDevice {
@@ -13,7 +16,6 @@ class mic extends ZigBeeDevice {
    */
 	async onNodeInit({zclNode}) {
 
-		this.print_log = 0;
         /* Version  >= 1.1.5 */
 
 		try {
@@ -54,8 +56,8 @@ class mic extends ZigBeeDevice {
 		// Capture the zoneStatusChangeNotification
 		zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].onZoneStatusChangeNotification = ({zoneStatus}) => {
 			try {
-				if(this.print_log === 1)  this.log('zoneStatus.alarm1:', zoneStatus.alarm1);
-				if(this.print_log === 1)  this.log('zoneStatus.battery:', zoneStatus.battery);
+				this.log('zoneStatus.alarm1:', zoneStatus.alarm1);
+				this.log('zoneStatus.battery:', zoneStatus.battery);
 
 				if(zoneStatus.alarm1 === true){
 					this.setCapabilityValue('alarm_fire', zoneStatus.alarm1).catch(this.error);
@@ -79,7 +81,7 @@ class mic extends ZigBeeDevice {
 
 		zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].onZoneEnrollRequest = () => {
 			try {
-				if(this.print_log === 1)  this.log("onZoneEnrollRequest");
+				this.log("onZoneEnrollRequest");
 
 				zclNode.endpoints[1].clusters.iasZone.zoneEnrollResponse({
 					enrollResponseCode: 0, // Success
@@ -112,7 +114,7 @@ class mic extends ZigBeeDevice {
    * 
    */
 	_onButton_pressHandler() {
-		if(this.print_log === 1)  this.log('Button Handler');
+		this.log('Button Handler');
 		
 		if (this.hasCapability('heartbeat')){ 
 			this.setCapabilityValue('heartbeat', false).catch(this.error);
