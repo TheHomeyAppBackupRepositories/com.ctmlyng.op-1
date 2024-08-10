@@ -3,48 +3,55 @@
 const { ZigBeeDevice } = require("homey-zigbeedriver");
 const { CLUSTER} = require('zigbee-clusters');
 
+const CTMFunction = require('../../lib/CTMFunc');
 
-class waterleaksensor extends ZigBeeDevice {
+class waterleaksensor extends CTMFunction {
 
   /**
    * onInit is called when the device is initialized.
    */
 	async onNodeInit({zclNode}) {
 
-    
-		this.log('WaterLekak sensor has been initialized');
-		this.setAvailable().catch(this.error);
 
-		//await this.addCapability('heartbeat').catch(this.error);
+		this.print_log = 1;
+		this.log('WaterLekak sensor has been initialized');
+		this.setAvailable().catch(err => { this.error(err);});
+
+		//await this.addCapability('heartbeat').catch(err => { this.error(err);});
 
 		if(this.isFirstInit()){
-			/*
-				If the valve is not connected to the gateway, the WaterLekaksensor will not transmitsend onZoneEnrollRequest. 
-		
-			*/
-			try {
-				zclNode.endpoints[1].clusters.iasZone.zoneEnrollResponse({
-					enrollResponseCode: 0, // Success
-					zoneId: 2, // Choose a zone id
-				});
-			} catch (err) {
-				this.error('Error in isFirstInit zoneEnrollResponse: ', err);
-			}
-		
+
 			
+			try {
+				this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].readAttributes('zoneState');
+				if(this.print_log === 1)this.log('zoneState: ', this.readattribute.zoneState);
+
+				if(this.readattribute.zoneState === 0){
+					
+					zclNode.endpoints[1].clusters.iasZone.zoneEnrollResponse({
+						enrollResponseCode: 0, // Success
+						zoneId: 1, // Choose a zone id
+					}).catch(err => { this.error(err);});
+				}
+	
+			} catch (err) {
+				this.error('Error in readAttributes zoneState: ', err);
+			}
+				
+		
 
 		}
 		/*
 		try {
 			const readattribute = await zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].readAttributes('iasCIEAddress')
-			this.log('iasCIEAddress: ', readattribute.iasCIEAddress);
+			if(this.print_log === 1)this.log('iasCIEAddress: ', readattribute.iasCIEAddress);
 
 		} catch (err) {
 			this.error('Error in readAttributes iasCIEAddress: ', err);
 
 		try {
 			const readattribute = await zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].readAttributes('zoneState')
-			this.log('zoneState: ', readattribute.zoneState);
+			if(this.print_log === 1)this.log('zoneState: ', readattribute.zoneState);
 
 		} catch (err) {
 			this.error('Error in readAttributes zoneState: ', err);
@@ -52,49 +59,76 @@ class waterleaksensor extends ZigBeeDevice {
 
 		try {
 			const readattribute = await zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].readAttributes('zoneId')
-			this.log('zoneId: ', readattribute.zoneId);
+			if(this.print_log === 1)this.log('zoneId: ', readattribute.zoneId);
 
 		} catch (err) {
 			this.error('Error in readAttributes zoneId: ', err);
 		}
 		*/
 		
+		if(this.hasCapability('alarm_generic') === true){
+			this.removeCapability('alarm_generic');
+		}
+
+		if(this.hasCapability('watchdog') === true){
+			this.removeCapability('watchdog');
+		}
+
+		if(this.getSetting('setting_intervall_alarm') === true){
+			this.sett_reporing_timeout(60);
+		}
+
+
 		
 			// Capture the zoneStatusChangeNotification
 			zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].onZoneStatusChangeNotification = ({zoneStatus}) => {
 				try {
-					this.log('zoneStatus.alarm2:', zoneStatus.alarm2);
-					this.log('zoneStatus.battery:', zoneStatus.battery);
+					if(this.print_log === 1)this.log('zoneStatus.alarm2:', zoneStatus.alarm2);
+					if(this.print_log === 1)this.log('zoneStatus.battery:', zoneStatus.battery);
 
-					this.setCapabilityValue('alarm_water', zoneStatus.alarm2).catch(this.error);
-					this.setCapabilityValue('alarm_battery', zoneStatus.battery).catch(this.error);
+					this.setCapabilityValue('alarm_water', zoneStatus.alarm2).catch(err => { this.error(err);});
+					this.setCapabilityValue('alarm_battery', zoneStatus.battery).catch(err => { this.error(err);});
 
 					if (this.hasCapability('heartbeat')){ 
-						this.setCapabilityValue('heartbeat', false).catch(this.error);
-						this.setCapabilityValue('heartbeat', true).catch(this.error);
+						this.setCapabilityValue('heartbeat', false).catch(err => { this.error(err);});
+						this.setCapabilityValue('heartbeat', true).catch(err => { this.error(err);});
 					}
+
+					if(this.getSetting('setting_intervall_alarm') === true){
+						this.sett_reporing_timeout(60);
+					}
+
+					
 				} catch (err) {
 					this.error('Error in onZoneStatusChangeNotification: ', err);
 				}
-				
+				1
 			};
 
 		
-			zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].onZoneEnrollRequest = () => {
+			zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].onZoneEnrollRequest = ({zoneType}) => {
 				try {
-					this.log("onZoneEnrollRequest");
+
+					if(this.print_log === 1){
+					
+						this.log("onZoneEnrollRequest");
+						this.log("args", zoneType);
+					}
+
 
 					zclNode.endpoints[1].clusters.iasZone.zoneEnrollResponse({
 						enrollResponseCode: 0, // Success
-						zoneId: 2, // Choose a zone id
-					});
+						zoneId: 1, // Choose a zone id
+					}).catch(err => { this.error(err);});
+
+
 				} catch (err) {
 					this.error('Error in onZoneStatusChangeNotification: ', err);
 				}
 
 			};
 	
-
+ 
 
   }
 
@@ -116,8 +150,34 @@ class waterleaksensor extends ZigBeeDevice {
    * @param {string[]} event.changedKeys An array of keys changed since the previous version
    * @returns {Promise<string|void>} return a custom message that will be displayed
    */
-  async onSettings({ oldSettings, newSettings, changedKeys }) {
+  async onSettings(event) {
     this.log('MyDevice settings where changed');
+
+		/********************************************************************************/
+		/*
+		/*      setting_intervall_alarm - 
+		/*      
+		**********************************************************************************/ 
+
+		if (event.changedKeys.includes('setting_intervall_alarm')){
+			
+			if(event.newSettings.setting_intervall_alarm === true){
+				
+				this.sett_reporing_timeout(60);
+		
+			} else {
+
+				if(typeof this.time_id !== "undefined")
+				{
+					this.log("Disable reporting Timeout");
+					this.homey.clearTimeout(this.time_id);
+				} 
+				//this.setCapabilityValue('watchdog', false).catch(err => { this.error(err);});
+			}
+
+
+		};
+
   }
 
   /**

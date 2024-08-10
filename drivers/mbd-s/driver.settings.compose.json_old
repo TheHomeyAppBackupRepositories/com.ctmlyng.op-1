@@ -1,0 +1,32 @@
+[
+    {
+		"type": "group",
+		"label": {
+			"en": "Settings",
+			"no": "Innstillinger"
+		},
+        "children": [
+
+            {
+                "id": "setting_class",
+                "type": "dropdown",
+                "value": "0",
+                "label": { "en": "Select device class",
+                           "no": "Velg type produkt"
+                         },
+                "hint": { "en": "By switching between device types light and socket, Homey will alter how the product behaves", "no": "Ved å bytte mellom enhetstype lys og kontakt vil Homey endre hvordan produktet oppfører seg"},
+                "values": [
+                  {
+                    "id": "light",
+                    "label": { "en": "Light", "no": "Lys" } 
+                  },
+                  {
+                    "id": "socket",
+                    "label": { "en": "Socket", "no": "Rele" }
+                  }
+                ]
+              }
+        ]
+    }
+]
+  

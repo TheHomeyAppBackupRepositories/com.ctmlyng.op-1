@@ -10,7 +10,28 @@ class WaterLeakDriver extends Driver {
   async onInit() {
     this.log('MyDriver has been initialized');
 
+    //this._deviceReportingTimeout = this.homey.flow.getDeviceTriggerCard("reporting_timeout2");
+    //this._deviceReportingTimeoutTest = this.homey.flow.getDeviceTriggerCard("watchdog");
 
+    this.WatchdogStartTrigger = this.homey.flow.getTriggerCard('watchdog');
+
+    //this.log(this.homey)
+
+    //this.log(this._deviceReportingTimeout)
+  }
+
+  /*
+  triggerTimeout(device) {
+      this._deviceReportingTimeout
+      .trigger(device)
+      .catch(err => { this.error(err);});
+  }
+  */
+
+  async triggerWatchdog(tokens) {
+    this.WatchdogStartTrigger
+    .trigger(tokens)
+    .catch(err => { this.error(err);});
   }
 
   /**

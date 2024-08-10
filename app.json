@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.ctmlyng.op",
-  "version": "1.1.20",
+  "version": "1.1.42",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "brandColor": "#000000",
@@ -56,6 +56,41 @@
   "homeyCommunityTopicId": 75265,
   "flow": {
     "triggers": [
+      {
+        "title": {
+          "en": "Reporting timeout",
+          "no": "Rapportering timeout"
+        },
+        "hint": {
+          "en": "If the watchdog is enabled in the device settings, this flow will be triggered if the device has not reported within the device's reporting interval.",
+          "no": "Hvis watchdog er aktivert under innstillinger på enheten, vil denne flowen trigges om enheten ikke har rapportert innen enhetens rapporteringsintervall"
+        },
+        "tokens": [
+          {
+            "type": "string",
+            "name": "device",
+            "title": {
+              "en": "Timeout_device"
+            },
+            "example": {
+              "en": "Name of the device",
+              "no": "Enheten"
+            }
+          },
+          {
+            "type": "number",
+            "name": "timeout",
+            "title": {
+              "en": "Timeout_minutes"
+            },
+            "example": {
+              "en": "Timeout limit in minutes",
+              "no": "Timeout-grense i minutter"
+            }
+          }
+        ],
+        "id": "watchdog"
+      },
       {
         "id": "hbu_short_button_1",
         "title": {
@@ -255,6 +290,70 @@
         ]
       },
       {
+        "id": "flow-when_measure_humidity",
+        "title": {
+          "en": "Humidity is !{{greater than or equal to|less than}}",
+          "no": "Luftfuktighet er !{{større eller lik|mindre enn}}"
+        },
+        "titleFormatted": {
+          "en": "Humidity is !{{greater than or equal to|less than}} [[humidity]]",
+          "no": "Luftfuktighet er !{{større eller lik|mindre enn}} [[humidity]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mtouch-luftfoler"
+          },
+          {
+            "type": "number",
+            "name": "humidity",
+            "title": {
+              "en": "%",
+              "no": "%"
+            },
+            "placeholder": {
+              "en": "44"
+            },
+            "min": 0,
+            "max": 100,
+            "step": 1
+          }
+        ]
+      },
+      {
+        "id": "flow-when_measure_temperature",
+        "title": {
+          "en": "Temperature is !{{greater than or equal to|less than}}",
+          "no": "Temperaturen er !{{større eller lik|mindre enn}}"
+        },
+        "titleFormatted": {
+          "en": "Temperature is !{{greater than or equal to|less than}} [[temperature]]",
+          "no": "Temperaturen er !{{større eller lik|mindre enn}} [[temperature]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mtouch-luftfoler"
+          },
+          {
+            "type": "number",
+            "name": "temperature",
+            "title": {
+              "en": "°C",
+              "no": "°C"
+            },
+            "placeholder": {
+              "en": "25"
+            },
+            "min": -20,
+            "max": 99,
+            "step": 1
+          }
+        ]
+      },
+      {
         "id": "flow-is_heating",
         "title": {
           "en": "Thermostat !{{is|not}} heating",
@@ -449,6 +548,39 @@
         ]
       },
       {
+        "id": "flow-change-dimlevel-withoutOn",
+        "title": {
+          "en": "Sett dimlevel without turing on",
+          "no": "Sett lysnivå uten å slå på lyset"
+        },
+        "titleFormatted": {
+          "en": "Change dim level to [[dim_level]]",
+          "no": "Sett lysnivå til [[dim_level]]"
+        },
+        "hint": {
+          "en": "You can use this to adjust the dimmer level without the light turning on. The dimmer will then start at this level on the next motion.",
+          "no": "Du kan bruke denne til å endre dimmernivå uten at lyset går på. Dimmeren vil da starte på dette nivået ved neste bevegelse."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mbd-s-dim"
+          },
+          {
+            "title": "%",
+            "type": "range",
+            "min": 1,
+            "max": 99,
+            "name": "dim_level",
+            "step": 1,
+            "label": "%",
+            "labelDecimals": 0,
+            "labelMultiplier": 1
+          }
+        ]
+      },
+      {
         "id": "flow-ChangeThermostatmode",
         "title": {
           "en": "Set thermostat in state",
@@ -554,6 +686,9 @@
           },
           {
             "type": "number",
+            "min": 1,
+            "max": 99,
+            "step": 1,
             "name": "setpoint",
             "title": {
               "en": "Setpoint",
@@ -635,12 +770,27 @@
       "class": "button",
       "capabilities": [
         "measure_battery",
-        "heartbeat"
+        "heartbeat",
+        "button.refresh",
+        "measure_temperature"
       ],
       "platforms": [
         "local",
         "cloud"
       ],
+      "capabilitiesOptions": {
+        "button.refresh": {
+          "maintenanceAction": true,
+          "title": {
+            "en": "Refresh settings",
+            "no": "Oppdatere innstillinger"
+          },
+          "desc": {
+            "en": "Send a request to the HBU for updated information",
+            "no": "Send en forespørsel til HBU på oppdatert informasjon. Husk og trykk på HBU panelet først så den er våken"
+          }
+        }
+      },
       "connectivity": [
         "zigbee"
       ],
@@ -661,11 +811,13 @@
               8,
               1026,
               4096,
-              65191
+              65191,
+              65261
             ],
             "bindings": [
               1,
-              6
+              6,
+              1026
             ]
           }
         },
@@ -687,7 +839,189 @@
         "large": "/drivers/hbu/assets/images/large.png",
         "xlarge": "/drivers/hbu/assets/images/xlarge.png"
       },
-      "id": "hbu"
+      "id": "hbu",
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Settings",
+            "no": "Innstillinger"
+          },
+          "children": [
+            {
+              "id": "setting_temp_cal",
+              "type": "number",
+              "label": {
+                "en": "Temperature offset",
+                "no": "Temperaturavvik"
+              },
+              "hint": {
+                "en": "The temperature sensor in the switch only displays whole degrees and is not very accurate. Therefore, it is possible to calibrate the temperature by setting the offset value here",
+                "no": "Temperatursensoren i bryteren viser bare helegrader, og er heller ikke så veldig nøyaktig. Det er derfor mulig å kalibrere temperaturen med å sette avviks verdien her"
+              },
+              "min": -10,
+              "max": 10,
+              "value": -3,
+              "units": "℃"
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Settings Button 1",
+            "no": "Innstillinger Knapp 1"
+          },
+          "children": [
+            {
+              "id": "setting_button_1",
+              "type": "checkbox",
+              "value": false,
+              "label": {
+                "en": "Enable virtual button",
+                "no": "Aktiver virtuell knapp"
+              },
+              "hint": {
+                "en": "If you press the icon of the device, it's this button that gets activated.",
+                "no": "Hvis man trykker på iconet til enheten er det denne knappen som aktiveres."
+              }
+            },
+            {
+              "id": "setting_button_1_text",
+              "type": "text",
+              "label": {
+                "en": "Label",
+                "no": "Navn"
+              },
+              "value": "Button 1",
+              "hint": {
+                "en": "Set your own name on the button 1",
+                "no": "Sett navn på knapp 1"
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Settings Button 2",
+            "no": "Innstillinger Knapp 2"
+          },
+          "children": [
+            {
+              "id": "setting_button_2",
+              "type": "checkbox",
+              "value": false,
+              "label": {
+                "en": "Enable virtual button",
+                "no": "Aktiver virtuell knapp"
+              }
+            },
+            {
+              "id": "setting_button_2_text",
+              "type": "text",
+              "label": {
+                "en": "Label",
+                "no": "Navn"
+              },
+              "value": "Button 2",
+              "hint": {
+                "en": "Set your own name on the button 2",
+                "no": "Sett navn på knapp 2"
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Settings Button 3",
+            "no": "Innstillinger Knapp 3"
+          },
+          "children": [
+            {
+              "id": "setting_button_3",
+              "type": "checkbox",
+              "value": false,
+              "label": {
+                "en": "Enable virtual button",
+                "no": "Aktiver virtuell knapp"
+              }
+            },
+            {
+              "id": "setting_button_3_text",
+              "type": "text",
+              "label": {
+                "en": "Label",
+                "no": "Navn"
+              },
+              "value": "Button 3",
+              "hint": {
+                "en": "Set your own name on the button 3",
+                "no": "Sett navn på knapp 3"
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Diagnostics",
+            "no": "Diagnostics"
+          },
+          "children": [
+            {
+              "id": "last_reset_info",
+              "type": "label",
+              "label": {
+                "en": "Last reset info"
+              }
+            },
+            {
+              "id": "last_extended_reset_info",
+              "type": "label",
+              "label": {
+                "en": "Last extended reset info"
+              }
+            },
+            {
+              "id": "reboot_counter",
+              "type": "label",
+              "label": {
+                "en": "Reboot counter"
+              }
+            },
+            {
+              "id": "last_hop_lqi",
+              "type": "label",
+              "label": {
+                "en": "Last hop lqi"
+              }
+            },
+            {
+              "id": "last_hop_rssi",
+              "type": "label",
+              "label": {
+                "en": "Last hop rssi"
+              }
+            },
+            {
+              "id": "parent_node_id",
+              "type": "label",
+              "label": {
+                "en": "Parent node id"
+              }
+            },
+            {
+              "id": "group_id",
+              "type": "label",
+              "label": {
+                "en": "Group-ID"
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "name": {
@@ -741,7 +1075,30 @@
         "large": "/drivers/mStikk-16/assets/images/large.png",
         "xlarge": "/drivers/mStikk-16/assets/images/xlarge.png"
       },
-      "id": "mStikk-16"
+      "id": "mStikk-16",
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Relay Settings",
+            "no": "Rele innstillinger"
+          },
+          "children": [
+            {
+              "id": "setting_kwh",
+              "type": "number",
+              "label": {
+                "en": "Consumption",
+                "no": "Forbruk"
+              },
+              "min": 0,
+              "max": 50000,
+              "value": 0,
+              "units": "kWh"
+            }
+          ]
+        }
+      ]
     },
     {
       "name": {
@@ -795,7 +1152,30 @@
         "large": "/drivers/mStikk-25/assets/images/large.png",
         "xlarge": "/drivers/mStikk-25/assets/images/xlarge.png"
       },
-      "id": "mStikk-25"
+      "id": "mStikk-25",
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Relay Settings",
+            "no": "Rele innstillinger"
+          },
+          "children": [
+            {
+              "id": "setting_kwh",
+              "type": "number",
+              "label": {
+                "en": "Consumption",
+                "no": "Forbruk"
+              },
+              "min": 0,
+              "max": 50000,
+              "value": 0,
+              "units": "kWh"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "mbd-s",
@@ -809,7 +1189,7 @@
       "class": "light",
       "capabilities": [
         "onoff",
-        "onoff.rele",
+        "onoff.bevegelse",
         "alarm_motion",
         "measure_luminance",
         "runtime"
@@ -821,13 +1201,13 @@
             "no": "Lysstyrke"
           }
         },
-        "onoff": {
+        "onoff.bevegelse": {
           "title": {
             "en": "Automatic triggering of relay",
             "no": "Automatisk trigging av rele"
           }
         },
-        "onoff.rele": {
+        "onoff": {
           "title": {
             "en": "Relay",
             "no": "Rele"
@@ -887,7 +1267,7 @@
       "class": "light",
       "capabilities": [
         "onoff",
-        "onoff.rele",
+        "onoff.bevegelse",
         "alarm_motion",
         "measure_luminance",
         "runtime",
@@ -900,13 +1280,13 @@
             "no": "Lysstyrke"
           }
         },
-        "onoff": {
+        "onoff.bevegelse": {
           "title": {
-            "en": "Automatic triggering of relay",
-            "no": "Automatisk trigging av rele"
+            "en": "Automatic triggering of light",
+            "no": "Automatisk trigging av lys"
           }
         },
-        "onoff.rele": {
+        "onoff": {
           "title": {
             "en": "Light",
             "no": "Lys"
@@ -972,9 +1352,9 @@
                 "en": "Max level",
                 "no": "Max nivå"
               },
-              "value": 99,
+              "value": 97,
               "min": 10,
-              "max": 99,
+              "max": 97,
               "units": "%"
             },
             {
@@ -1022,7 +1402,7 @@
       ],
       "energy": {
         "batteries": [
-          "CR2032"
+          "CR2450"
         ]
       },
       "connectivity": [
@@ -1059,7 +1439,31 @@
         "small": "/drivers/mic/assets/images/small.png",
         "large": "/drivers/mic/assets/images/large.png",
         "xlarge": "/drivers/mic/assets/images/xlarge.png"
-      }
+      },
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Settings",
+            "no": "Innstillinger"
+          },
+          "children": [
+            {
+              "id": "setting_intervall_alarm",
+              "type": "checkbox",
+              "value": false,
+              "label": {
+                "en": "Watchdog actice",
+                "no": "Watchdog aktivert"
+              },
+              "hint": {
+                "en": "If enabled, a flow will trigger if the device hasn't reported temperature within 30 minutes.",
+                "no": "Hvis aktivert vil en flow trigges hvis enheten ikke har rapportert temperatur innen 30 minutter"
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "mkomfy-18",
@@ -1400,7 +1804,6 @@
               10
             ],
             "bindings": [
-              3,
               6
             ]
           }
@@ -1502,9 +1905,9 @@
                 "en": "Max level",
                 "no": "Max nivå"
               },
-              "value": 99,
+              "value": 97,
               "min": 10,
-              "max": 99,
+              "max": 97,
               "units": "%"
             },
             {
@@ -1526,9 +1929,9 @@
                 "en": "Turn on level",
                 "no": "Påslagsnivå"
               },
-              "value": 99,
+              "value": 97,
               "min": 1,
-              "max": 99,
+              "max": 97,
               "units": "%"
             }
           ]
@@ -1591,7 +1994,31 @@
         "large": "/drivers/mtouch-luftfoler/assets/images/large.png",
         "xlarge": "/drivers/mtouch-luftfoler/assets/images/xlarge.png"
       },
-      "id": "mtouch-luftfoler"
+      "id": "mtouch-luftfoler",
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Settings",
+            "no": "Innstillinger"
+          },
+          "children": [
+            {
+              "id": "setting_intervall_alarm",
+              "type": "checkbox",
+              "value": false,
+              "label": {
+                "en": "Watchdog actice",
+                "no": "Watchdog aktivert"
+              },
+              "hint": {
+                "en": "If enabled, a flow will trigger if the device hasn't reported temperature within 1 hour.",
+                "no": "Hvis aktivert vil en flow trigges hvis enheten ikke har rapportert temperatur innen 1 time"
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "name": {
@@ -1635,9 +2062,11 @@
             "en": "Regulator",
             "no": "Regulator"
           },
-          "min": 0,
+          "min": 1,
           "max": 99,
-          "step": 1
+          "step": 1,
+          "label": "%",
+          "labelMultiplier": 1
         },
         "target_temperature": {
           "title": {
@@ -1731,6 +2160,7 @@
             {
               "id": "setting_use_average",
               "type": "checkbox",
+              "value": false,
               "label": {
                 "en": "Display actual consumption rather than the consumption average",
                 "no": "Vis reelt forbruk og ikke gjennomsnitt"
@@ -1743,7 +2173,7 @@
             {
               "id": "setting_temperaturSensor",
               "type": "dropdown",
-              "value": "NA",
+              "value": "Air",
               "label": {
                 "en": "Select sensor source",
                 "no": "Velg ønsket temperatursensor"
@@ -1786,7 +2216,7 @@
             {
               "id": "setting_regulatorfuksjon",
               "type": "dropdown",
-              "value": "NA",
+              "value": "0",
               "label": {
                 "en": "Select thermostat function",
                 "no": "Velg ønsket termostatfunksjon"
@@ -1826,7 +2256,7 @@
                 "en": "Floor sensor connected",
                 "no": "Gulvfølerer tilkoblet"
               },
-              "value": "NA",
+              "value": "",
               "hint": {
                 "en": "Read-only"
               }
@@ -1838,7 +2268,7 @@
                 "en": "External sensor connected",
                 "no": "Ekstern sensor tilkoblet"
               },
-              "value": "NA",
+              "value": "",
               "hint": {
                 "en": "Read-only"
               }
@@ -1902,6 +2332,28 @@
               "hint": {
                 "en": "If empty try power reset the Thermostat",
                 "no": "Hvis tom vil det hjelpe å restarte termostaten ved å ta strømmen."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Alarm",
+            "no": "Alarm"
+          },
+          "children": [
+            {
+              "id": "setting_intervall_alarm",
+              "type": "checkbox",
+              "value": false,
+              "label": {
+                "en": "Watchdog actice",
+                "no": "Watchdog aktivert"
+              },
+              "hint": {
+                "en": "If enabled, a flow will trigger if the device hasn't reported air temperature within 1 hour.",
+                "no": "Hvis aktivert vil en flow trigges hvis enheten ikke har rapportert lufttemperatur innen 1 time"
               }
             }
           ]
@@ -2037,7 +2489,7 @@
           "image": "/drivers/tavlerele-25/assets/images/include.png",
           "instruction": {
             "en": "Hold down the button (Funksjonsknapp) for 4-7 seconds and release when the blue LED lights up. Yellow LED flashes when it searches for Gateway. ",
-            "no": "Hold inne funksjonsknappen i 4-7 sekunder og slipp mens blå lysdiode lyser. Gul lysdiode blinker når den søker etter Gateway/HUB"
+            "no": "Hold inne funksjonsknappen i 4-7 sekunder og slipp mens blå lysdiode lyser. Gul lysdiode blinker når den søker etter Gateway/HUB."
           }
         },
         "endpoints": {
@@ -2062,7 +2514,30 @@
         "large": "/drivers/tavlerele-25/assets/images/large.png",
         "xlarge": "/drivers/tavlerele-25/assets/images/xlarge.png"
       },
-      "id": "tavlerele-25"
+      "id": "tavlerele-25",
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Relay Settings",
+            "no": "Rele innstillinger"
+          },
+          "children": [
+            {
+              "id": "setting_kwh",
+              "type": "number",
+              "label": {
+                "en": "Consumption",
+                "no": "Forbruk"
+              },
+              "min": 0,
+              "max": 50000,
+              "value": 0,
+              "units": "kWh"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "ventildriver",
@@ -2120,7 +2595,31 @@
         "small": "/drivers/ventildriver/assets/images/small.png",
         "large": "/drivers/ventildriver/assets/images/large.png",
         "xlarge": "/drivers/ventildriver/assets/images/xlarge.png"
-      }
+      },
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Settings",
+            "no": "Innstillinger"
+          },
+          "children": [
+            {
+              "id": "setting_intervall_alarm",
+              "type": "checkbox",
+              "value": false,
+              "label": {
+                "en": "Watchdog actice",
+                "no": "Watchdog aktivert"
+              },
+              "hint": {
+                "en": "If enabled, a flow will trigger if the device hasn't reported status within 30 minutes.",
+                "no": "Hvis aktivert vil en flow trigges hvis enheten ikke har rapportert status innen 30 minutter"
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "water_leak_sensor",
@@ -2140,7 +2639,7 @@
       ],
       "energy": {
         "batteries": [
-          "CR2032"
+          "CR2450"
         ]
       },
       "connectivity": [
@@ -2176,7 +2675,31 @@
         "small": "/drivers/water_leak_sensor/assets/images/small.png",
         "large": "/drivers/water_leak_sensor/assets/images/large.png",
         "xlarge": "/drivers/water_leak_sensor/assets/images/xlarge.png"
-      }
+      },
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Settings",
+            "no": "Innstillinger"
+          },
+          "children": [
+            {
+              "id": "setting_intervall_alarm",
+              "type": "checkbox",
+              "value": false,
+              "label": {
+                "en": "Watchdog actice",
+                "no": "Watchdog aktivert"
+              },
+              "hint": {
+                "en": "If enabled, a flow will trigger if the device hasn't reported status within 1 hour.",
+                "no": "Hvis aktivert vil en flow trigges hvis enheten ikke har rapportert status innen 1 time"
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "capabilities": {

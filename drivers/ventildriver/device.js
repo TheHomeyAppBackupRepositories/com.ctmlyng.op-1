@@ -3,18 +3,46 @@
 const { ZCLNode, CLUSTER } = require('zigbee-clusters');
 const { ZigBeeDevice } = require('homey-zigbeedriver');
 
+const CTMFunction = require('../../lib/CTMFunc');
 
-
-class ventildriver extends ZigBeeDevice {
+class ventildriver extends CTMFunction {
 
   /**
    * onInit is called when the device is initialized.
    */
 	async onNodeInit({ zclNode }) {  
 
+
+		this.print_log = 0;
 		this.log('WaterValve has been initialized');
-		this.setAvailable().catch(this.error);
-    
+		this.setAvailable().catch(err => { this.error(err);});
+		
+		if(this.isFirstInit()){
+
+			
+			try {
+				this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].readAttributes('zoneState');
+				if(this.print_log === 1)this.log('zoneState: ', this.readattribute.zoneState);
+
+				if(this.readattribute.zoneState === 0){
+					
+					zclNode.endpoints[1].clusters.iasZone.zoneEnrollResponse({
+						enrollResponseCode: 0, // Success
+						zoneId: 1, // Choose a zone id
+					}).catch(err => { this.error(err);});
+				}
+	
+			} catch (err) {
+				this.error('Error in readAttributes zoneState: ', err);
+			}
+				
+		
+
+		}
+
+		if(this.getSetting('setting_intervall_alarm') === true){
+			this.sett_reporing_timeout(30);
+		}
 		
 		if (this.hasCapability('onoff')) {
 
@@ -24,24 +52,23 @@ class ventildriver extends ZigBeeDevice {
 				try {
 
 					if(onOff === false){
-						this.log ('set to: Off');
+						if(this.print_log === 1)  this.log ('set to: Off');
 						await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOff({},{
 							waitForResponse: true,
-						});
+						}).catch(err => { this.error(err);});
 					} else {
-						this.log ('set to: ON');
+						if(this.print_log === 1)  this.log ('set to: ON');
 						await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOn({},{
 							waitForResponse: true,
-						});
+						}).catch(err => { this.error(err);});
 					}					
 					
 					
-					this.log ('onoff set to:', onOff);
+					if(this.print_log === 1)  this.log ('onoff set to:', onOff);
 
-					this.setCapabilityValue('onoff', onOff).catch(this.error);
+					this.setCapabilityValue('onoff', onOff).catch(err => { this.error(err);});
 
 				} catch (err) {
-
 						this.error('Error in setting onoff: ', err);
 				}
 				
@@ -53,9 +80,9 @@ class ventildriver extends ZigBeeDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.onOff', (attr_value) => {
 				try {
 							
-					this.log('attr.onOff: ', attr_value);
+					if(this.print_log === 1)  this.log('attr.onOff: ', attr_value);
 
-					this.setCapabilityValue('onoff', attr_value).catch(this.error);
+					this.setCapabilityValue('onoff', attr_value).catch(err => { this.error(err);});
 
 				} catch (err) {
 					this.error('Error in onoff: ', err);
@@ -68,14 +95,18 @@ class ventildriver extends ZigBeeDevice {
 		
 
 		
-		zclNode.endpoints[2].clusters.iasZone.onZoneEnrollRequest = () => {
+		zclNode.endpoints[2].clusters.iasZone.onZoneEnrollRequest = ({args}) => {
 			try {
-				this.log("onZoneEnrollRequest");
-
+				if(this.print_log === 1){
+					
+					this.log("onZoneEnrollRequest");
+					this.log("args", args);
+				}
+				
 				zclNode.endpoints[2].clusters.iasZone.zoneEnrollResponse({
 					enrollResponseCode: 0, // Success
 					zoneId: 1,
-				});
+				}).catch(err => { this.error(err);});
 			} catch (err) {
 				this.error('Error in onZoneEnrollRequest: ', err);
 			}
@@ -86,11 +117,16 @@ class ventildriver extends ZigBeeDevice {
 		zclNode.endpoints[2].clusters[CLUSTER.IAS_ZONE.NAME]
 		.onZoneStatusChangeNotification = ({zoneStatus}) => {
 			
-			this.log('zoneStatus.alarm2:', zoneStatus.alarm2);
-			this.log('zoneStatus.battery:', zoneStatus.acMains);
+			if(this.print_log === 1)  this.log('zoneStatus.alarm2:', zoneStatus.alarm2);
+			if(this.print_log === 1)  this.log('zoneStatus.battery:', zoneStatus.acMains);
 
-			this.setCapabilityValue('alarm_water', zoneStatus.alarm2).catch(this.error);
-			this.setCapabilityValue('power_mains', zoneStatus.acMains).catch(this.error);
+			this.setCapabilityValue('alarm_water', zoneStatus.alarm2).catch(err => { this.error(err);});
+			this.setCapabilityValue('power_mains', zoneStatus.acMains).catch(err => { this.error(err);});
+
+			if(this.getSetting('setting_intervall_alarm') === true){
+				this.sett_reporing_timeout(30);
+			}
+
 			
 		};
     
@@ -107,7 +143,7 @@ class ventildriver extends ZigBeeDevice {
 	}
 
 	async onEndDeviceAnnounce(){
-		this.setAvailable().catch(this.error);
+		this.setAvailable().catch(err => { this.error(err);});
 	}
 	
 	/**
@@ -118,8 +154,38 @@ class ventildriver extends ZigBeeDevice {
 	 * @param {string[]} event.changedKeys An array of keys changed since the previous version
 	 * @returns {Promise<string|void>} return a custom message that will be displayed
 	 */
-	async onSettings({ oldSettings, newSettings, changedKeys }) {
+	async onSettings(event) {
 		this.log('MyDevice settings where changed');
+
+				/********************************************************************************/
+		/*
+		/*      setting_intervall_alarm - 
+		/*      
+		**********************************************************************************/ 
+
+		if (event.changedKeys.includes('setting_intervall_alarm')){
+			
+			//this.log('setting_intervall_alarm: ', event.newSettings.setting_intervall_alarm);
+
+
+			if(event.newSettings.setting_intervall_alarm === true){
+				
+				this.sett_reporing_timeout(30);
+		
+			} else {
+
+				if(typeof this.time_id !== "undefined")
+				{
+					this.log("Disable reporting Timeout");
+					this.homey.clearTimeout(this.time_id);
+				} 
+				//this.setCapabilityValue('watchdog', false).catch(err => { this.error(err);});
+			}
+
+
+
+		};
+
 	}
 
 	/**

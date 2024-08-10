@@ -5,7 +5,7 @@ const { debug } = require('zigbee-clusters');
   
 
 // Enable zigbee-cluster logging
-//debug(true);
+debug(false);
 
 
 
@@ -23,9 +23,14 @@ class MyApp extends Homey.App {
 			process.stdout.write = () => {}
 		}
     */
+
+    
     
 
+
   }
+
+
 
 }
 

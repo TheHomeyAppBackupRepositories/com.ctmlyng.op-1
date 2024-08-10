@@ -12,6 +12,14 @@ class MBDDriver extends Driver {
 
 
 
+      //FLOWCARD - cardChangeDimlevelWithoutOn  
+      this.cardChangeDimlevelWithoutOn = this.homey.flow.getActionCard('flow-change-dimlevel-withoutOn');
+      this.cardChangeDimlevelWithoutOn.registerRunListener(async (args) => {
+        await args.device.flowChangeDimlevelWithoutOn(args);
+      });
+
+
+    /*
     //ConditionCard - HEATING
     this.cardConditionRelay = this.homey.flow.getConditionCard('flow-rele_status');
     this.cardConditionRelay.registerRunListener(async (args) => {
@@ -24,6 +32,7 @@ class MBDDriver extends Driver {
     this.cardEnableRelay.registerRunListener(async (args) => {
         await args.device.flowEnableRelay(args);
     });
+    */
 
 
   }

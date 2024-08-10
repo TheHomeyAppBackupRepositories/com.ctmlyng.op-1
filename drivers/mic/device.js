@@ -3,10 +3,7 @@
 const { ZigBeeDevice } = require("homey-zigbeedriver");
 const { CLUSTER} = require('zigbee-clusters');
 
-
-
 const CTMOnOffBoundCluster = require('../../lib/CTMOnOffBoundCluster');
-
 
 
 class mic extends ZigBeeDevice {
@@ -16,6 +13,7 @@ class mic extends ZigBeeDevice {
    */
 	async onNodeInit({zclNode}) {
 
+		this.print_log = 0;
         /* Version  >= 1.1.5 */
 
 		try {
@@ -29,23 +27,26 @@ class mic extends ZigBeeDevice {
 
 
 		this.log('MIC sensor has been initialized');
-		this.setAvailable().catch(this.error);
+		this.setAvailable().catch(err => { this.error(err);});
 
-		//await this.addCapability('heartbeat').catch(this.error);
+		if(this.getSetting('setting_intervall_alarm') === true){
+			this.sett_reporing_timeout(60);
+		}
+
+
+		//await this.addCapability('heartbeat').catch(err => { this.error(err);});
 
 		if(this.isFirstInit()){
 			/*
 				If the valve is not connected to the gateway, the WaterLekaksensor will not transmitsend onZoneEnrollRequest. 
 		
 			*/
-			try {
+			
 				zclNode.endpoints[1].clusters.iasZone.zoneEnrollResponse({
 					enrollResponseCode: 0, // Success
 					zoneId: 2, // Choose a zone id
-				});
-			} catch (err) {
-				this.error('Error in isFirstInit zoneEnrollResponse: ', err);
-			}
+				}).catch(err => { this.error(err);});
+	
 		
 			
 
@@ -56,19 +57,24 @@ class mic extends ZigBeeDevice {
 		// Capture the zoneStatusChangeNotification
 		zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].onZoneStatusChangeNotification = ({zoneStatus}) => {
 			try {
-				this.log('zoneStatus.alarm1:', zoneStatus.alarm1);
-				this.log('zoneStatus.battery:', zoneStatus.battery);
+				if(this.print_log === 1)  this.log('zoneStatus.alarm1:', zoneStatus.alarm1);
+				if(this.print_log === 1)  this.log('zoneStatus.battery:', zoneStatus.battery);
 
 				if(zoneStatus.alarm1 === true){
-					this.setCapabilityValue('alarm_fire', zoneStatus.alarm1).catch(this.error);
+					this.setCapabilityValue('alarm_fire', zoneStatus.alarm1).catch(err => { this.error(err);});
 				} 
 				
-				this.setCapabilityValue('alarm_battery', zoneStatus.battery).catch(this.error);
+				this.setCapabilityValue('alarm_battery', zoneStatus.battery).catch(err => { this.error(err);});
 
 				if (this.hasCapability('heartbeat')){ 
-					this.setCapabilityValue('heartbeat', false).catch(this.error);
-					this.setCapabilityValue('heartbeat', true).catch(this.error);
+					this.setCapabilityValue('heartbeat', false).catch(err => { this.error(err);});
+					this.setCapabilityValue('heartbeat', true).catch(err => { this.error(err);});
 				}
+
+				if(this.getSetting('setting_intervall_alarm') === true){
+					this.sett_reporing_timeout(60);
+				}
+
 			} catch (err) {
 				this.error('Error in onZoneStatusChangeNotification: ', err);
 			}
@@ -80,16 +86,14 @@ class mic extends ZigBeeDevice {
 
 
 		zclNode.endpoints[1].clusters[CLUSTER.IAS_ZONE.NAME].onZoneEnrollRequest = () => {
-			try {
-				this.log("onZoneEnrollRequest");
+			
+				if(this.print_log === 1)  this.log("onZoneEnrollRequest");
 
 				zclNode.endpoints[1].clusters.iasZone.zoneEnrollResponse({
 					enrollResponseCode: 0, // Success
 					zoneId: 2, // Choose a zone id
-				});
-			} catch (err) {
-				this.error('Error in onZoneStatusChangeNotification: ', err);
-			}
+				}).catch(err => { this.error(err);});
+	
 		};
 
 
@@ -98,7 +102,7 @@ class mic extends ZigBeeDevice {
 		try {
 			zclNode.endpoints[1].bind(CLUSTER.ON_OFF.NAME, new CTMOnOffBoundCluster({
 				onsetOn: this._onButton_pressHandler.bind(this),
-			}));
+			})).catch(err => { this.error(err);});
 
 		} catch (err) {
 			this.error('Error in Bind setOn button command: ', err);
@@ -114,15 +118,15 @@ class mic extends ZigBeeDevice {
    * 
    */
 	_onButton_pressHandler() {
-		this.log('Button Handler');
+		if(this.print_log === 1)  this.log('Button Handler');
 		
 		if (this.hasCapability('heartbeat')){ 
-			this.setCapabilityValue('heartbeat', false).catch(this.error);
-			this.setCapabilityValue('heartbeat', true).catch(this.error);
+			this.setCapabilityValue('heartbeat', false).catch(err => { this.error(err);});
+			this.setCapabilityValue('heartbeat', true).catch(err => { this.error(err);});
 		}
 		
-		this.setCapabilityValue('alarm_fire', false).catch(this.error);
-		this.triggerFlow({ id: 'mic_button' }).catch(this.error);
+		this.setCapabilityValue('alarm_fire', false).catch(err => { this.error(err);});
+		this.triggerFlow({ id: 'mic_button' }).catch(err => { this.error(err);});
 	}
 
 
@@ -142,8 +146,35 @@ class mic extends ZigBeeDevice {
    * @param {string[]} event.changedKeys An array of keys changed since the previous version
    * @returns {Promise<string|void>} return a custom message that will be displayed
    */
-  async onSettings({ oldSettings, newSettings, changedKeys }) {
+  async onSettings(event) {
     this.log('MyDevice settings where changed');
+
+		/********************************************************************************/
+		/*
+		/*      setting_intervall_alarm - 
+		/*      
+		**********************************************************************************/ 
+
+		if (event.changedKeys.includes('setting_intervall_alarm')){
+			
+			//this.log('setting_intervall_alarm: ', event.jgnewSettings.setting_intervall_alarm);
+
+			if(event.newSettings.setting_intervall_alarm === true){
+				
+				this.sett_reporing_timeout(60);
+		
+			} else {
+
+				if(typeof this.time_id !== "undefined")
+				{
+					this.log("Disable reporting Timeout");
+					this.homey.clearTimeout(this.time_id);
+				} 
+				//this.setCapabilityValue('watchdog', false).catch(err => { this.error(err);});
+			}
+
+		};
+
   }
 
   /**

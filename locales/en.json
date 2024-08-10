@@ -10,5 +10,6 @@
     "flow_CostControlErrorMode": "Error! Cost Control not supported in regulatormode",
     "WarningExternalSensor": "External sensor error",
     "flow_CostControlEnableFailed": "Error! Enable Cost control failed",
-    "flow_CangeThermostatStateError": "Error! Unable to change thermostat state"
+    "flow_CangeThermostatStateError": "Error! Unable to change thermostat state",
+    "onoff_error": "Error! Device not responding"
 }

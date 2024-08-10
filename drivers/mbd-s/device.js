@@ -1,9 +1,10 @@
 'use strict';
 
-
+const Homey = require('homey');
 const { ZigBeeDevice } = require('homey-zigbeedriver');
-const { CLUSTER, ZCLNode } = require('zigbee-clusters');
-const CTMmbdCluster = require('../../lib/CTMSpecificMBDCluster');
+const { ZCLNode, CLUSTER, Cluster } = require('zigbee-clusters');
+const CTMSpesificOnOffCluster = require('../../lib/CTMSpesificOnOffCluster');
+
 
 
 class mdb extends ZigBeeDevice {
@@ -12,63 +13,86 @@ class mdb extends ZigBeeDevice {
    * onInit is called when the device is initialized.
    */
   async onNodeInit({ zclNode }) {
-      //this.enableDebug();
-      this.setAvailable().catch(this.error);
 
-	  
+	this.print_log = 0;
+      //this.enableDebug();
+      this.setAvailable().catch(err => { this.error(err);});
+
+	 	try {
+			if(this.hasCapability('onoff.rele') === true){
+				await this.removeCapability('onoff.rele');
+			}
+		} catch (err) {
+		}
+		
+		try {
+			if(this.hasCapability('onoff.bevegelse') === false){
+				await this.addCapability('onoff.bevegelse');
+			}
+		} catch (err) {
+		}
+
+
 
 		try {
-			this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].readAttributes('onOff');
-      		this.setCapabilityValue('onoff', this.readattribute.onOff).catch(this.error);
+			this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].readAttributes('onOff').catch(err => { this.error(err);});
+			if(typeof this.readattribute.relay_state !== "undefined")
+			{
+			this.setCapabilityValue('onoff.bevegelse', this.readattribute.onOff).catch(err => { this.error(err);});
+			} 
 
-      		this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].readAttributes('relay_state');
-			this.setCapabilityValue('onoff.rele', this.readattribute.relay_state).catch(this.error);
+      		this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].readAttributes('relay_state').catch(err => { this.error(err);});
+			if(typeof this.readattribute.relay_state !== "undefined")
+			{
+				this.setCapabilityValue('onoff', this.readattribute.relay_state).catch(err => { this.error(err);});
+			} 
 
+			
 		} catch (err) {
-			this.setUnavailable('Cannot reach zigbee device').catch(this.error);
+			this.setUnavailable('Cannot reach zigbee device').catch(err => { this.error(err);});
 			this.error('Error in readAttributes onOff: ', err);
 		}
     
 /******************************************************************************* */
 /*
-/*      Relestatus:
+/*      Bevegelse:
 /*
 **********************************************************************************/ 
  
 
 
-	if (this.hasCapability('onoff')) {
+	if (this.hasCapability('onoff.bevegelse')) {
 
 		zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.onOff', (attr_value) => {
 			try {
-				this.setAvailable().catch(this.error);
-				this.log('push: attr.onOff: ', attr_value);
+				this.setAvailable().catch(err => { this.error(err);});
+				//if(this.print_log === 1)  this.log('push: attr.onOff: ', attr_value);
 
-				this.setCapabilityValue('onoff', attr_value);
+				this.setCapabilityValue('onoff.bevegelse', attr_value).catch(err => { this.error(err);});
 
 			} catch (err) {
 				this.error('Error in onOff: ', err);
 			}
 		});
 
-		this.registerCapabilityListener('onoff', async (onOff) => {
+		this.registerCapabilityListener('onoff.bevegelse', async (onOff) => {
 			try {
 				
 				if(onOff === false){
-					this.log ('set to: Off');
+					if(this.print_log === 1)  this.log ('set to: Off');
 					await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOff({},{
 						waitForResponse: false,
-					});
+					}).catch(err => { this.error(err);});
 				} else {
-					this.log ('set to: ON');
+					if(this.print_log === 1)  this.log ('set to: ON');
 					await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOn({},{
 						waitForResponse: false,
-					});
+					}).catch(err => { this.error(err);});
 				}
 				
-				this.setCapabilityValue('onoff', onOff);
+				this.setCapabilityValue('onoff.bevegelse', onOff).catch(err => { this.error(err);});
 
-				this.log ('onoff.rele set to:', onOff);
+				if(this.print_log === 1)  this.log ('onoff.bevegelse set to:', onOff);
 			
 			} catch (err) {
 				this.error('Error in setting onoff: ', err)
@@ -90,16 +114,16 @@ class mdb extends ZigBeeDevice {
 **********************************************************************************/ 
 
 
-	if (this.hasCapability('onoff.rele')) {
+	if (this.hasCapability('onoff')) {
 
 	
 		zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.relay_state', (attr_value) => {
 			try {
 						
-				this.log('push relay_state: ', attr_value);
+				//if(this.print_log === 1)  this.log('push relay_state: ', attr_value);
 				//this.enableDebug();
-				this.setAvailable().catch(this.error);
-				this.setCapabilityValue('onoff.rele', attr_value).catch(this.error);
+				this.setAvailable().catch(err => { this.error(err);});
+				this.setCapabilityValue('onoff', attr_value).catch(err => { this.error(err);});
 			
 			} catch (err) {
 				this.error('Error in rele: ', err);
@@ -109,11 +133,11 @@ class mdb extends ZigBeeDevice {
 
 
 		
-		this.registerCapabilityListener('onoff.rele', async (relay_state) => {
+		this.registerCapabilityListener('onoff', async (relay_state) => {
 			try {
-				await zclNode.endpoints[1].clusters.onOff.writeAttributes({ relay_state: relay_state });
-				this.log ('relay_state set to:', relay_state)
-				this.setCapabilityValue('onoff.rele', relay_state).catch(this.error);
+				await zclNode.endpoints[1].clusters.onOff.writeAttributes({ relay_state: relay_state }).catch(err => { this.error(err);});
+				if(this.print_log === 1)  this.log ('relay_state set to:', relay_state)
+				this.setCapabilityValue('onoff', relay_state).catch(err => { this.error(err);});
         
 			} catch (err) {
 				this.error('Error in setting relay_state: ', err)
@@ -143,18 +167,18 @@ class mdb extends ZigBeeDevice {
             report: 'pirOccupiedToUnoccupiedDelay',
             reportParser(data) {
 				
-              this.log('pirOccupiedToUnoccupiedDelay sek : ', data);
+              if(this.print_log === 1)  this.log('pirOccupiedToUnoccupiedDelay sek : ', data);
               if(data < 60){
 
 				if(this.data_format != 1){
-					this.log("Change CapabilityOptions runtime");
+					if(this.print_log === 1)  this.log("Change CapabilityOptions runtime");
 					this.setCapabilityOptions("runtime", {
 							title: {
 							  en: "Time on in seconds",
 							  no: "Påtid i sekunder"
 							}
 
-					});
+					}).catch(err => { this.error(err);});
 					
 					this.data_format = 1
 				}
@@ -163,14 +187,15 @@ class mdb extends ZigBeeDevice {
               } else {
 
 				if(this.data_format != 2){
-					this.log("Change CapabilityOptions runtime");
+					if(this.print_log === 1)  this.log("Change CapabilityOptions runtime");
+					
 					this.setCapabilityOptions("runtime", {
 							title: {
 								en: "Time on in minutes",
 								no: "Påtid i minutter"
 							}
 					
-					});
+					}).catch(err => { this.error(err);});
 					this.data_format = 2
 				}
 				
@@ -203,7 +228,7 @@ class mdb extends ZigBeeDevice {
             },
             report: 'occupancy',
             reportParser(data) {
-              this.log('occupancy : ', (data));
+              if(this.print_log === 1)  this.log('occupancy : ', (data));
               if(data.occupied) return true; else return false;
             },
             endpoint: this.getClusterEndpoint(CLUSTER.OCCUPANCY_SENSING),
@@ -230,9 +255,9 @@ class mdb extends ZigBeeDevice {
             },
             report: 'measuredValue',
             reportParser(data) {
-              //this.log('pirOccupiedToUnoccupiedDelay min : ', (data/60));
+              //if(this.print_log === 1)  this.log('pirOccupiedToUnoccupiedDelay min : ', (data/60));
               //return data/60;
-              this.setAvailable().catch(this.error);
+              this.setAvailable().catch(err => { this.error(err);});
               
               this.illuminanceLux = data === 0 ? 0 : Math.pow(10, (data - 1) / 10000);
               return this.illuminanceLux;
@@ -259,12 +284,12 @@ class mdb extends ZigBeeDevice {
 	async flowEnableRelay(args){
 		try {
 
-			await this.zclNode.endpoints[1].clusters.onOff.writeAttributes({ relay_state: args.flow_relay });
-			this.setCapabilityValue('onoff.rele', args.flow_relay).catch(this.error);
-			this.log ('Flow relay_state set to:', args.flow_relay)
+			await this.zclNode.endpoints[1].clusters.onOff.writeAttributes({ relay_state: args.flow_relay }).catch(err => { this.error(err);});
+			this.setCapabilityValue('onoff.rele', args.flow_relay).catch(err => { this.error(err);});
+			if(this.print_log === 1)  this.log ('Flow relay_state set to:', args.flow_relay)
 
 		} catch (err) {
-			this.log('flowEnableRelay: ', err);
+			if(this.print_log === 1)  this.log('flowEnableRelay: ', err);
 			throw new Error('Error! Uanble to enable relay');
 		}
 	}
@@ -284,7 +309,7 @@ class mdb extends ZigBeeDevice {
 			}
 
 		} catch (err) {
-			this.log('flowIs_Rele: ', err);
+			if(this.print_log === 1)  this.log('flowIs_Rele: ', err);
 			throw new Error('Error! Uanble to get CapabilityValue');
 		}
 	}
@@ -299,7 +324,7 @@ class mdb extends ZigBeeDevice {
 	}
 
   	async onEndDeviceAnnounce(){
-		this.setAvailable().catch(this.error);
+		this.setAvailable().catch(err => { this.error(err);});
 	}
   /**
    * onSettings is called when the user updates the device's settings.
@@ -311,6 +336,24 @@ class mdb extends ZigBeeDevice {
    */
   async onSettings(event) {
 
+
+		/********************************************************************************/
+		/*
+		/*      setting_class - 
+		/*      
+		**********************************************************************************/ 
+		/*
+		if (event.changedKeys.includes('setting_class')){
+			
+			this.log('setting_class: ', event.newSettings.setting_class);
+
+			if(this.getClass() !== event.newSettings.setting_class){
+				this.setClass(event.newSettings.setting_class).catch(err => { this.error(err);});
+			}
+
+			
+		};
+		*/
 
   }
 

@@ -9,7 +9,19 @@ class VentilDriverDriver extends Driver {
    */
   async onInit() {
     this.log('MyDriver has been initialized');
+
+    this.WatchdogStartTrigger = this.homey.flow.getTriggerCard('watchdog');
+
   }
+
+  
+  async triggerWatchdog(tokens) {
+    this.WatchdogStartTrigger
+    .trigger(tokens)
+    .catch(err => { this.error(err);});
+  }
+
+
 
   /**
    * onPairListDevices is called when a user is adding a device

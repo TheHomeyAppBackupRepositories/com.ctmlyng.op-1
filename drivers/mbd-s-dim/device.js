@@ -3,7 +3,7 @@
 
 const { ZigBeeLightDevice } = require('homey-zigbeedriver');
 const { CLUSTER, ZCLNode } = require('zigbee-clusters');
-const CTMmbdCluster = require('../../lib/CTMSpecificMBDCluster');
+const CTMSpesificOnOffCluster = require('../../lib/CTMSpesificOnOffCluster');
 
 
 class mdb_dim extends ZigBeeLightDevice {
@@ -13,41 +13,80 @@ class mdb_dim extends ZigBeeLightDevice {
    */
   async onNodeInit({ zclNode }) {
       //this.enableDebug();
+	  this.print_log = 0;
       this.setAvailable().catch(this.error);
 
 
-	  try{
-			
-		await this.configureAttributeReporting([
-			{
-				endpointId: this.getClusterEndpoint(CLUSTER.ON_OFF),
-				cluster: CLUSTER.ON_OFF,
-				attributeName: 'relay_state',
-				minInterval: 1,
-				maxInterval: 65534, // once per ~18 hour
-				minChange: 1,
+		try {
+			if(this.hasCapability('onoff.rele') === true){
+				await this.removeCapability('onoff.rele');
 			}
-			
-		]);
+		} catch (err) {}
+		
+		try {
+			if(this.hasCapability('onoff.bevegelse') === false){
+				await this.addCapability('onoff.bevegelse');
+			}
+		} catch (err) {}
+		
 
-		} catch (err) {
-			//this.setUnavailable().catch(this.error);
-			this.error('Error in configureAttributeReporting: ', err);
-		}	
+	  if(this.isFirstInit()){
+			try{
+					
+				await this.configureAttributeReporting([
+					{
+						endpointId: this.getClusterEndpoint(CLUSTER.ON_OFF),
+						cluster: CLUSTER.ON_OFF,
+						attributeName: 'relay_state',
+						minInterval: 1,
+						maxInterval: 65534, // once per ~18 hour
+						minChange: 1,
+					}
+					
+				]).catch(this.error);
+
+			} catch (err) {
+				//this.setUnavailable().catch(this.error);
+				this.error('Error in configureAttributeReporting: ', err);
+			}	
+	  	}
 
 
 
 		try {
-			this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].readAttributes('onOff');
-      		this.setCapabilityValue('onoff', this.readattribute.onOff).catch(this.error);
+			this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].readAttributes('onOff').catch(this.error);
+      		this.setCapabilityValue('onoff.bevegelse', this.readattribute.onOff).catch(this.error);
 
-      		this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].readAttributes('relay_state');
-			this.setCapabilityValue('onoff.rele', this.readattribute.relay_state).catch(this.error);
+      		this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].readAttributes('relay_state').catch(this.error);
+			this.setCapabilityValue('onoff', this.readattribute.relay_state).catch(this.error);
 
 		} catch (err) {
 			this.setUnavailable('Cannot reach zigbee device').catch(this.error);
 			this.error('Error in readAttributes onOff: ', err);
 		}
+
+		try {
+	
+			this.readattribute = await zclNode.endpoints[1].clusters[CLUSTER.BALLAST_CONFIGURATION.NAME].readAttributes('maxLevel', 'minLevel', 'powerOnLevel').catch(this.error);
+			
+			if(this.print_log === 1)  this.log("'maxLevel', 'minLevel', 'powerOnLevel'", this.readattribute);
+
+			this.settings = this.getSettings();
+
+			if((this.readattribute.maxLevel) > 99 || (this.readattribute.maxLevel < 10)) this.readattribute.maxLevel = this.settings.setting_max_dim;
+			if((this.readattribute.minLevel) > 80 || (this.readattribute.minLevel < 1)) this.readattribute.minLevel = this.settings.setting_min_dim;
+			if((this.readattribute.powerOnLevel) > 99 || (this.readattribute.powerOnLevel < 1)) this.readattribute.powerOnLevel = this.settings.setting_on_dim;
+			
+			this.setSettings({
+				setting_max_dim: this.readattribute.maxLevel,
+				setting_min_dim: this.readattribute.minLevel,
+				setting_on_dim: this.readattribute.powerOnLevel
+			}).catch(this.error);
+
+		} catch (err) {
+			this.error('Error in readAttributes maxLevel, minLevel, powerOnLevel: ', err);
+		}
+
     
 /******************************************************************************* */
 /*
@@ -57,41 +96,41 @@ class mdb_dim extends ZigBeeLightDevice {
  
 
 
-	if (this.hasCapability('onoff')) {
+	if (this.hasCapability('onoff.bevegelse')) {
 
 		zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.onOff', (attr_value) => {
 			try {
 				this.setAvailable().catch(this.error);
-				this.log('push: attr.onOff: ', attr_value);
+				if(this.print_log === 1)  this.log('push: attr.onOff: ', attr_value);
 
-				this.setCapabilityValue('onoff', attr_value);
+				this.setCapabilityValue('onoff.bevegelse', attr_value).catch(this.error);
 
 			} catch (err) {
 				this.error('Error in onOff: ', err);
 			}
 		});
 
-		this.registerCapabilityListener('onoff', async (onOff) => {
+		this.registerCapabilityListener('onoff.bevegelse', async (onOff) => {
 			try {
 				
 				if(onOff === false){
-					this.log ('set to: Off');
+					if(this.print_log === 1)  this.log ('set to: Off');
 					await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOff({},{
 						waitForResponse: false,
-					});
+					}).catch(this.error);
 				} else {
-					this.log ('set to: ON');
+					if(this.print_log === 1)  this.log ('set to: ON');
 					await zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].setOn({},{
 						waitForResponse: false,
-					});
+					}).catch(this.error);
 				}
 				
-				this.setCapabilityValue('onoff', onOff);
+				this.setCapabilityValue('onoff.bevegelse', onOff).catch(this.error);
 
-				this.log ('onoff.rele set to:', onOff);
+				if(this.print_log === 1)  this.log ('onoff.bevegelse set to:', onOff);
 			
 			} catch (err) {
-				this.error('Error in setting onoff: ', err)
+				this.error('Error in setting onoff.bevegelse: ', err)
 			}
 
 		});
@@ -110,16 +149,16 @@ class mdb_dim extends ZigBeeLightDevice {
 **********************************************************************************/ 
 
 
-	if (this.hasCapability('onoff.rele')) {
+	if (this.hasCapability('onoff')) {
 
 	
 		zclNode.endpoints[1].clusters[CLUSTER.ON_OFF.NAME].on('attr.relay_state', (attr_value) => {
 			try {
 						
-				this.log('push relay_state: ', attr_value);
+				if(this.print_log === 1)  this.log('push relay_state: ', attr_value);
 				//this.enableDebug();
 				this.setAvailable().catch(this.error);
-				this.setCapabilityValue('onoff.rele', attr_value).catch(this.error);
+				this.setCapabilityValue('onoff', attr_value).catch(this.error);
 			
 			} catch (err) {
 				this.error('Error in rele: ', err);
@@ -129,11 +168,11 @@ class mdb_dim extends ZigBeeLightDevice {
 
 
 		
-		this.registerCapabilityListener('onoff.rele', async (relay_state) => {
+		this.registerCapabilityListener('onoff', async (relay_state) => {
 			try {
 				await zclNode.endpoints[1].clusters.onOff.writeAttributes({ relay_state: relay_state });
-				this.log ('relay_state set to:', relay_state)
-				this.setCapabilityValue('onoff.rele', relay_state).catch(this.error);
+				if(this.print_log === 1)  this.log ('relay_state set to:', relay_state)
+				this.setCapabilityValue('onoff', relay_state).catch(this.error);
         
 			} catch (err) {
 				this.error('Error in setting relay_state: ', err)
@@ -163,11 +202,11 @@ class mdb_dim extends ZigBeeLightDevice {
             report: 'pirOccupiedToUnoccupiedDelay',
             reportParser(data) {
 				
-              this.log('pirOccupiedToUnoccupiedDelay sek : ', data);
+              if(this.print_log === 1)  this.log('pirOccupiedToUnoccupiedDelay sek : ', data);
               if(data < 60){
 
 				if(this.data_format != 1){
-					this.log("Change CapabilityOptions runtime");
+					if(this.print_log === 1)  this.log("Change CapabilityOptions runtime");
 					this.setCapabilityOptions("runtime", {
 							title: {
 							  en: "Time on in seconds",
@@ -183,7 +222,7 @@ class mdb_dim extends ZigBeeLightDevice {
               } else {
 
 				if(this.data_format != 2){
-					this.log("Change CapabilityOptions runtime");
+					if(this.print_log === 1)  this.log("Change CapabilityOptions runtime");
 					this.setCapabilityOptions("runtime", {
 							title: {
 								en: "Time on in minutes",
@@ -223,7 +262,7 @@ class mdb_dim extends ZigBeeLightDevice {
             },
             report: 'occupancy',
             reportParser(data) {
-              this.log('occupancy : ', (data));
+              if(this.print_log === 1)  this.log('occupancy : ', (data));
               if(data.occupied) return true; else return false;
             },
             endpoint: this.getClusterEndpoint(CLUSTER.OCCUPANCY_SENSING),
@@ -250,7 +289,7 @@ class mdb_dim extends ZigBeeLightDevice {
             },
             report: 'measuredValue',
             reportParser(data) {
-              //this.log('pirOccupiedToUnoccupiedDelay min : ', (data/60));
+              //if(this.print_log === 1)  this.log('pirOccupiedToUnoccupiedDelay min : ', (data/60));
               //return data/60;
               this.setAvailable().catch(this.error);
               
@@ -277,7 +316,7 @@ class mdb_dim extends ZigBeeLightDevice {
 			zclNode.endpoints[1].clusters[CLUSTER.LEVEL_CONTROL.NAME].on('attr.currentLevel', (attr_value) => {
 				try {
 							
-					this.log('attr.currentLevel: ', attr_value);
+					if(this.print_log === 1)  this.log('attr.currentLevel: ', attr_value);
 
 					/*
 					if(this.getCapabilityValue('onoff') === false){
@@ -288,7 +327,7 @@ class mdb_dim extends ZigBeeLightDevice {
 					*/
 					this.setAvailable().catch(this.error);
 
-					this.setCapabilityValue('dim', (attr_value / 254));
+					this.setCapabilityValue('dim', (attr_value / 254)).catch(this.error);
 
 				} catch (err) {
 					this.error('Error in currentLevel: ', err);
@@ -316,7 +355,7 @@ class mdb_dim extends ZigBeeLightDevice {
 						}
 					);
 
-				this.log ('dim currentLevel set to:', currentLevel);
+				if(this.print_log === 1)  this.log ('dim currentLevel set to:', currentLevel);
 				
 			} catch (err) {
 					//this.setUnavailable().catch(this.error);
@@ -342,10 +381,10 @@ class mdb_dim extends ZigBeeLightDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.BALLAST_CONFIGURATION.NAME].on('attr.maxLevel', (attr_value) => {
 			try {
 
-				this.log('maxLevel: ', attr_value);
+				if(this.print_log === 1)  this.log('maxLevel: ', attr_value);
 				this.setSettings({
 					setting_max_dim: attr_value,
-				});
+				}).catch(this.error);
 
 
 			} catch (err) {
@@ -368,10 +407,10 @@ class mdb_dim extends ZigBeeLightDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.BALLAST_CONFIGURATION.NAME].on('attr.minLevel', (attr_value) => {
 			try {
 
-				this.log('minLevel: ', attr_value);
+				if(this.print_log === 1)  this.log('minLevel: ', attr_value);
 				this.setSettings({
 					setting_min_dim: attr_value,
-				});
+				}).catch(this.error);
 
 
 			} catch (err) {
@@ -396,10 +435,10 @@ class mdb_dim extends ZigBeeLightDevice {
 		zclNode.endpoints[1].clusters[CLUSTER.BALLAST_CONFIGURATION.NAME].on('attr.powerOnLevel', (attr_value) => {
 			try {
 
-				this.log('powerOnLevel: ', attr_value);
+				if(this.print_log === 1)  this.log('powerOnLevel: ', attr_value);
 				this.setSettings({
 					setting_on_dim: attr_value,
-				});
+				}).catch(this.error);
 
 			} catch (err) {
 				this.error('Error in powerOnLevel: ', err);
@@ -411,9 +450,47 @@ class mdb_dim extends ZigBeeLightDevice {
 		this.error('Error in readAttributes powerOnLevel: ', err);
 	}
 
+
+
+
+
       
 
   }
+
+  	/********************************************************************************/
+	/*
+	/*      FLOWCARD - Change Dimlevel WithoutOn
+	/*      Gir oss muligheten til å endre dimmernivå uten at lyset slåes på. 
+	/*           
+	**********************************************************************************/ 
+
+	async flowChangeDimlevelWithoutOn(args){
+
+		try {
+			this.dim_level = (args.dim_level / 100);
+
+			this.zclNode.endpoints[1].clusters.levelControl.moveToLevel(
+				{
+					level: Math.round(this.dim_level * 254),
+					transitionTime: 0,
+				},
+				{
+					waitForResponse: false,
+				}
+			);
+
+
+			this.setCapabilityValue('dim', this.dim_level);
+		} catch (err) {
+			this.error('Error in flowChangeDimlevelWithoutOn: ', err);
+			throw new Error('Error: Something went wrong');
+		}
+
+		
+
+	
+	}
 
 
   	/**
@@ -438,11 +515,11 @@ class mdb_dim extends ZigBeeLightDevice {
 
 			/********************************************************************************/
 			/*
-			/*      setting_max_dim - 
+			/*      setting_min_dim - 
 			/*      
 			**********************************************************************************/ 
 			
-			if (event.changedKeys.includes('setting_max_dim')) {
+			if (event.changedKeys.includes('setting_min_dim')) {
 				
 				this.log('setting_min_dim: ', event.newSettings.setting_min_dim);
 				
@@ -457,7 +534,7 @@ class mdb_dim extends ZigBeeLightDevice {
 			
 			/********************************************************************************/
 			/*
-			/*      setting_min_dim - 
+			/*      setting_max_dim - 
 			/*      
 			**********************************************************************************/ 
 			
